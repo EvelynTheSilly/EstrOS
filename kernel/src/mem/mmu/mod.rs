@@ -1,4 +1,6 @@
 //! mmu implementation using aarch64-paging crate
+#![allow(unused)]
+
 #[allow(dead_code)]
 const KILOBYTE: u64 = 1048;
 #[allow(dead_code)]
