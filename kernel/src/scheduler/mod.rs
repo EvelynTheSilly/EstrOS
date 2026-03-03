@@ -28,7 +28,8 @@ where
         Scheduler::schedule(self)
     }
     pub fn store_thread(&mut self) {}
-    pub fn launch_process(&mut self, elf: ElfBytes<AnyEndian>) -> Result<()> {
+    ///returns a PID
+    pub fn launch_process(&mut self, elf: ElfBytes<AnyEndian>) -> Result<u64> {
         let pheaders = elf.segments().ok_or(anyhow!("no valid headers"))?;
         let load_headers = pheaders.iter().filter(|header| header.p_type == PT_LOAD);
         let mut segments = Vec::with_capacity(load_headers.count());
@@ -39,15 +40,19 @@ where
             aarch64_paging::paging::TranslationRegime::El1And0,
             aarch64_paging::paging::VaRange::Lower,
         );
+        let mut pid = crate::rng::RNG.lock(|rng| rng.rand_u64());
+        while !self.processes.contains_key(&pid) {
+            pid = crate::rng::RNG.lock(|rng| rng.rand_u64());
+        }
         self.processes.insert(
-            crate::rng::RNG.lock(|rng| rng.rand_u64()),
+            pid,
             Process {
                 segments: segments,
                 memory_map: memmap,
                 threads: vec![],
             },
         );
-        Ok(())
+        Ok(pid)
     }
 }
 
