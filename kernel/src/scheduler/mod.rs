@@ -4,14 +4,12 @@ use crate::rng::Rng;
 use crate::syncronisation::Mutex;
 use crate::vectors::cpu_state::State;
 use aarch64_paging::linearmap::LinearMap;
-use alloc::alloc::Layout;
-use alloc::vec;
 use alloc::{collections::btree_map::BTreeMap, vec::Vec};
+use anyhow::bail;
 use anyhow::{Result, anyhow};
 use elf::ElfBytes;
 use elf::abi::PT_LOAD;
 use elf::endian::AnyEndian;
-use elf::segment::ProgramHeader;
 use process::Process;
 use threads::SchedulerThread;
 
@@ -33,6 +31,15 @@ where
         Scheduler::schedule(self)
     }
     pub fn report_thread_state(&mut self, pid: u64, tid: u64, state: State) -> Result<()> {
+        if let Some(process) = self.processes.get_mut(&pid) {
+            if let Some(thread) = process.threads.get_mut(&tid) {
+                thread.state = state
+            } else {
+                bail!("invalid tid");
+            }
+        } else {
+            bail!("invalid pid");
+        }
         Ok(())
     }
     ///returns a PID
@@ -56,23 +63,10 @@ where
             Process {
                 segments: segments,
                 memory_map: memmap,
-                threads: vec![],
+                threads: BTreeMap::new(),
             },
         );
         Ok(pid)
-    }
-}
-
-impl Drop for SegmentAllocation {
-    fn drop(&mut self) {
-        /// SAFETY: layout cant be invalid
-        unsafe {
-            alloc::alloc::dealloc(
-                self.allocation,
-                Layout::from_size_align(self.header.p_memsz as usize, self.header.p_align as usize)
-                    .unwrap(),
-            );
-        }
     }
 }
 
@@ -83,15 +77,7 @@ pub trait CpuScheduler: Sized {
 }
 
 impl CpuScheduler for StupidScheduler {
-    fn schedule(manager: &mut ProcessManager<Self>) -> Result<SchedulerThread> {
-        Ok(manager
-            .processes
-            .first_key_value()
-            .unwrap_or(return Err(anyhow::anyhow!("no processes")))
-            .1
-            .threads
-            .first()
-            .unwrap_or(return Err(anyhow::anyhow!("first process has no threads")))
-            .clone())
+    fn schedule(_manager: &mut ProcessManager<Self>) -> Result<SchedulerThread> {
+        bail!("unimplemented");
     }
 }
