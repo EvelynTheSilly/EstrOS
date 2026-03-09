@@ -76,6 +76,10 @@ pub extern "C" fn kernel_init() {
     };
 }
 
+fn init() {
+    println!("test");
+}
+
 extern "C" fn get_init_process(initial_thread_state: *mut State) {
     unsafe {
         // dummy state
