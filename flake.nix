@@ -59,9 +59,9 @@
           BOOT_FIRMWARE_PATH = "${pkgs.pkgsCross.aarch64-multiplatform.OVMF.fd}/FV";
           CARGO_UNSTABLE_JSON_TARGET_SPEC = "true";
           shellHook = ''
-            echo "AArch64 bare-metal dev shell ready!"
-            echo "Toolchain prefix: aarch64-none-elf-"
-            nu -e "alias cloc = cloc --vcs git; alias bacon = bacon -- -Z json-target-spec; alias cargo = cargo -Z json-target-spec "
+            if [[ $- == *i* ]]; then
+                nu -e "alias cloc = cloc --vcs git; alias bacon = bacon -- -Z json-target-spec; alias cargo = cargo -Z json-target-spec "
+            fi
           '';
         };
       }

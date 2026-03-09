@@ -1,15 +1,17 @@
-qemuflags := "-M virt \
-    -cpu cortex-a57 \
-    -drive if=pflash,unit=0,format=raw,file=bin/AAVMF_CODE.fd,readonly=on \
-    -drive if=pflash,unit=1,format=raw,file=bin/AAVMF_VARS.fd \
-    -drive file=build/disk.img,format=raw \
-    -serial mon:stdio \
-    -device ramfb \
-	-device qemu-xhci \
-	-device usb-kbd \
-	-device usb-mouse \
-    -semihosting \
-"
+qemuflags := """
+    -M virt 
+    -cpu cortex-a57 
+    -drive if=pflash,unit=0,format=raw,file=bin/AAVMF_CODE.fd,readonly=on 
+    -drive if=pflash,unit=1,format=raw,file=bin/AAVMF_VARS.fd 
+    -drive file=build/disk.img,format=raw 
+    -serial mon:stdio 
+    -device ramfb 
+	-device qemu-xhci 
+	-device usb-kbd 
+	-device usb-mouse 
+	-smp 4 
+    -semihosting 
+"""
 
 build_kernel_elf opt="debug":
     if [ -f "config.sh" ]; then \
@@ -97,13 +99,19 @@ debug:
     just build
     @echo "running vm"
     @echo "exit with ctrl a, then x"
-    @echo "run mask start_gdb to attatch to the debugger"
     @echo ""
     @echo ""
     qemu-system-aarch64 {{ qemuflags }} -S -s
 
 gdb:
     aarch64-none-elf-gdb -ex "target remote :1234" -ex "symbol-file build/kernel.elf"
+
+fulldebug:
+    #! /usr/bin/env nix-shell
+    #! nix-shell -i bash -p bash
+    alacritty -e bash -c "just gdb" &
+    just debug
+    kill $!
 
 create_temp_dir name:
     mkdir -p {{ name }}
