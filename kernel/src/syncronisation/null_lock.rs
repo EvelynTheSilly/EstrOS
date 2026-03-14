@@ -4,6 +4,7 @@
 use super::Mutex;
 use core::cell::UnsafeCell;
 
+#[allow(unused)]
 pub struct NullLock<T>
 where
     T: ?Sized,
@@ -14,6 +15,7 @@ where
 unsafe impl<T> Send for NullLock<T> where T: ?Sized + Send {}
 unsafe impl<T> Sync for NullLock<T> where T: ?Sized + Send {}
 
+#[allow(unused)]
 impl<T> NullLock<T> {
     /// Create an instance.
     pub const fn new(data: T) -> Self {

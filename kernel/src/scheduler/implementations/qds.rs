@@ -1,5 +1,6 @@
 use crate::{
-    mem::paging::ArbitraryTranslation,
+    mem::paging::{ArbitraryTranslation, kernel_virtual_to_physical},
+    println,
     rng::Rng,
     scheduler::{
         CpuScheduler,
@@ -16,7 +17,7 @@ use aarch64_paging::{
 use alloc::{alloc::alloc, collections::btree_map::BTreeMap};
 use anyhow::{Result, anyhow, bail};
 use core::alloc::Layout;
-use elf::{ElfBytes, abi::PT_LOAD, endian::AnyEndian, segment::ProgramHeader};
+use elf::{ElfBytes, abi::PT_LOAD, endian::AnyEndian};
 
 /// Quick and Dirty Scheduler
 /// not meant to truly be functional, rewrite later
@@ -49,6 +50,10 @@ impl CpuScheduler for QDScheduler {
         );
         #[allow(unreachable_code)]
         load_headers.for_each(|header| {
+            println!("loading header {:?}", header);
+            if header.p_memsz == 0 {
+                return;
+            }
             let allocation;
             // safety: this is unsafe, dont care, MORE UNSAFE!
             unsafe {
@@ -64,12 +69,14 @@ impl CpuScheduler for QDScheduler {
                         header.p_vaddr as usize,
                         (header.p_vaddr + header.p_memsz) as usize,
                     ),
-                    PhysicalAddress(allocation as usize),
+                    PhysicalAddress(kernel_virtual_to_physical(allocation) as usize),
                     elf_flags_to_mmu_constrains(header.p_flags),
                     Constraints::empty(),
                 )
                 .expect("idk man. TODO probably handle this error idk");
+            println!("mapped a full header")
         });
+        println!("mapped all headers");
         let mut pid = crate::rng::RNG.lock(|rng| rng.rand_u64());
         while !self.processes.contains_key(&pid) {
             pid = crate::rng::RNG.lock(|rng| rng.rand_u64());

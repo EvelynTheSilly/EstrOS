@@ -1,6 +1,8 @@
 use aarch64_paging::{descriptor::PhysicalAddress, paging::PageTable};
-use alloc::alloc::{Layout, alloc, dealloc, handle_alloc_error};
+use alloc::alloc::{Layout, dealloc, handle_alloc_error};
 use core::ptr::NonNull;
+
+use crate::println;
 
 pub struct ArbitraryTranslation;
 
@@ -20,7 +22,7 @@ impl aarch64_paging::paging::Translation for ArbitraryTranslation {
             if vaddr.is_null() {
                 handle_alloc_error(layout)
             }
-            paddr = PhysicalAddress(vaddr.byte_sub(0xFFFFFFFF00000000) as usize);
+            paddr = PhysicalAddress(vaddr as usize - 0xFFFFFFFF00000000);
         }
 
         (

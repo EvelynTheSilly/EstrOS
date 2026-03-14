@@ -19,7 +19,6 @@ core::arch::global_asm!(
         bl load_cpu_state
         ldr x30, [sp], #8
         eret
-        //udf #0
         b .                                      // hang forever
         
     enable_fpu:

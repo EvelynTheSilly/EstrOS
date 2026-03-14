@@ -2,12 +2,7 @@ use crate::{
     mem::{mmu::NORMAL_CACHEABLE, paging::ArbitraryTranslation},
     scheduler::threads::SchedulerThread,
 };
-use aarch64_paging::{
-    descriptor::Attributes,
-    linearmap::LinearMap,
-    paging::{Constraints, RootTable},
-};
-use alloc::{collections::btree_map::BTreeMap, vec::Vec};
+use aarch64_paging::{descriptor::Attributes, paging::RootTable};
 use core::alloc::Layout;
 use elf::segment::ProgramHeader;
 
