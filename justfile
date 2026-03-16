@@ -95,21 +95,21 @@ buildrun:
     just run
 
 debug:
-    just build
-    @echo "running vm"
-    @echo "exit with ctrl a, then x"
-    @echo ""
-    @echo ""
+    #! /usr/bin/env nix-shell
+    #! nix-shell -i bash -p bash
+    alacritty -e bash -c "just gdb" &
     qemu-system-aarch64 {{ qemuflags }} -S -s
+    kill $!
 
 gdb:
-    aarch64-none-elf-gdb -ex "target remote :1234" -ex "symbol-file build/kernel.elf"
+    aarch64-none-elf-gdb -ex "target remote :1234" 
 
 fulldebug:
     #! /usr/bin/env nix-shell
     #! nix-shell -i bash -p bash
+    just build
     alacritty -e bash -c "just gdb" &
-    just debug
+    qemu-system-aarch64 {{ qemuflags }} -S -s
     kill $!
 
 create_temp_dir name:
