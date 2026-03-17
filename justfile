@@ -95,6 +95,10 @@ debug:
     #! /usr/bin/env nix-shell
     #! nix-shell -i bash -p bash
     alacritty -e bash -c "just gdb" &
+    echo "running vm"
+    echo ""
+    echo ""
+    echo ""
     qemu-system-aarch64 {{ qemuflags }} -S -s
     kill $!
 
@@ -106,6 +110,10 @@ fulldebug opt="debug":
     #! nix-shell -i bash -p bash
     just build {{ opt }}
     alacritty -e bash -c "just gdb" &
+    echo "running vm"
+    echo ""
+    echo ""
+    echo ""
     qemu-system-aarch64 {{ qemuflags }} -S -s
     kill $!
 
