@@ -52,8 +52,14 @@ macro_rules! println {
         ()
     };
     ($($arg:tt)*) => {{
-        let _ = $crate::print!($($arg)*);
-        let _ = $crate::print!("\n\r");
+        use $crate::uart::Uart;
+        use $crate::uart::UART;
+        use $crate::syncronisation::Mutex;
+        use core::fmt::Write;
+        UART.lock(|mut uart|{
+            let _ = Uart::write_fmt(&mut uart,core::format_args!($($arg)*));
+            let _ = Uart::write_fmt(&mut uart,core::format_args!("\n\r"));
+        });
     }};
 }
 
