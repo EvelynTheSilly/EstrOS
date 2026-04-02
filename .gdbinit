@@ -5,11 +5,11 @@ define show_el
 end
 
 define esr
-    p/x $ESR_EL1
+    printf "esr: 0x%016lx\n\n", $ESR_EL1
 end
 
 define elr_disas
-    p/x $ELR_EL1
+    printf "elr: 0x%016lx\n\n", $ELR_EL1
     disassemble $ELR_EL1
 end
 
@@ -30,3 +30,10 @@ b el0_aarch32_sync
 b el0_aarch32_irq
 b el0_aarch32_fiq
 b el0_aarch32_serror
+
+commands 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16
+esr
+elr_disas
+end
+
+b kernel::kernel_init
