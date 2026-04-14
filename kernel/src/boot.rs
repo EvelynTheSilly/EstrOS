@@ -10,6 +10,10 @@ core::arch::global_asm!(
     el1_start:
         bl enable_fpu
         bl setup_vtable
+        
+        mov x0, sp
+        msr spsel, #1
+        mov sp, x0
     
         // enter rust
         bl {kernel_init}

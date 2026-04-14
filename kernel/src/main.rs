@@ -18,13 +18,11 @@
 #![warn(clippy::missing_const_for_fn)]
 
 use crate::{
-    mem::paging::ArbitraryTranslation,
     scheduler::{CpuScheduler, PROCESS_MANAGER},
     syncronisation::Mutex,
     vectors::cpu_state::State,
 };
 use aarch64_cpu::asm::wfi;
-use aarch64_paging::Mapping;
 use core::{arch::asm, hint::spin_loop, panic::PanicInfo};
 use elf::{ElfBytes, endian::AnyEndian};
 use limine::{
@@ -82,8 +80,6 @@ pub extern "C" fn kernel_init() {
     unsafe {
         println!("booting estros...");
 
-        println!("setting mair");
-
         println!("loading init...");
         let init = include_bytes!("../../build/init.elf");
         let init_elf = ElfBytes::<AnyEndian>::minimal_parse(init).expect("INVALID INIT FILE");
@@ -99,16 +95,14 @@ extern "C" fn get_init_process(initial_thread_state: *mut State) {
     unsafe {
         let thread = PROCESS_MANAGER.lock(|manager| manager.schedule().unwrap());
         *initial_thread_state = thread.state;
-
-        println!("the line after activating my mem map");
     }
-    //println!("loaded init");
+    println!("loaded init");
 }
 
 #[allow(unused)]
 unsafe extern "C" fn core_init(cpu: &Cpu) -> ! {
     unsafe {
-        core::ptr::write_volatile(0x0900_0000 as *mut u8, 67);
+        core::ptr::write_volatile(0xFFFF_0000_0900_0000 as *mut u8, 67);
     }
     println!("cpu init: {:#?}", cpu.id);
     loop {
