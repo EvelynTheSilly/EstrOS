@@ -23,7 +23,7 @@ use crate::{
     vectors::cpu_state::State,
 };
 use aarch64_cpu::asm::wfi;
-use core::{arch::asm, hint::spin_loop, panic::PanicInfo};
+use core::{hint::spin_loop, panic::PanicInfo};
 use elf::{ElfBytes, endian::AnyEndian};
 use limine::{
     BaseRevision,

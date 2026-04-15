@@ -1,13 +1,11 @@
 use crate::{
     mem::paging::{ArbitraryTranslation, kernel_virtual_to_physical},
     println,
-    rng::Rng,
     scheduler::{
         CpuScheduler,
         process::{Process, elf_flags_to_mmu_constrains},
         threads::SchedulerThread,
     },
-    syncronisation::Mutex,
     vectors::cpu_state::State,
 };
 use aarch64_paging::{
@@ -91,11 +89,7 @@ impl CpuScheduler for QDScheduler {
                 .expect("idk man. TODO probably handle this error idk");
         });
         println!("mapped all headers");
-        let mut pid = crate::rng::RNG.lock(|rng| rng.rand_u64());
-        //while !self.processes.contains_key(&pid) {
-        //    pid = crate::rng::RNG.lock(|rng| rng.rand_u64());
-        //}
-        pid = 0;
+        let pid = 0;
         let common_data = elf.find_common_data().unwrap();
         let symtab = common_data.symtab.unwrap();
         let strtab = common_data.symtab_strs.unwrap();
