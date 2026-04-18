@@ -67,7 +67,7 @@ impl CpuScheduler for QDScheduler {
                 allocation = alloc(layout);
             }
             println!(
-                "va range {} \n pa {:} dest va {:x}",
+                "va range {} \n pa {:} allocation va {:x}",
                 &MemoryRegion::new(
                     header.p_vaddr as usize,
                     (header.p_vaddr + header.p_memsz) as usize,
