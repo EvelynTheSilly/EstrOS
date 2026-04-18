@@ -39,3 +39,5 @@ end
 
 b kernel::kernel_init
 b kernel::get_init_process
+
+set output-radix 16
