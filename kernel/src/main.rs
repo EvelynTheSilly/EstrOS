@@ -99,14 +99,3 @@ extern "C" fn get_init_process(initial_thread_state: *mut State) {
     }
     println!("loaded init");
 }
-
-#[allow(unused)]
-unsafe extern "C" fn core_init(cpu: &Cpu) -> ! {
-    unsafe {
-        core::ptr::write_volatile(0xFFFF_0000_0900_0000 as *mut u8, 67);
-    }
-    println!("cpu init: {:#?}", cpu.id);
-    loop {
-        spin_loop();
-    }
-}
