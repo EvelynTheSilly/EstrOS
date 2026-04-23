@@ -32,7 +32,12 @@ impl Drop for SegmentAllocation {
 pub fn elf_flags_to_mmu_constrains(flags: u32) -> Attributes {
     let exec = flags & 0x1 != 0;
     let write = flags & 0x2 != 0;
-    let mut acc = NORMAL_CACHEABLE | Attributes::PXN;
+    let mut acc = NORMAL_CACHEABLE
+        | Attributes::PXN
+        | Attributes::USER
+        | Attributes::VALID
+        | Attributes::ACCESSED
+        | Attributes::NON_GLOBAL;
     if !exec {
         acc |= Attributes::UXN;
     }

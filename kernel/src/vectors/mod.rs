@@ -58,6 +58,7 @@ macro_rules! asm_vector_table {
 
                     "bl load_cpu_state\n",
                     "ldr x30, [sp], #8\n",
+                    "eret\n",
 
                     ".space 128 - (. - ",stringify!($vector_name),")\n",
                 )*
