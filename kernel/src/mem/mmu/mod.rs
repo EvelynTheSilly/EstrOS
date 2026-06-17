@@ -1,88 +1,27 @@
-//! mmu implementation using aarch64-paging crate
-#![allow(unused)]
+use aarch64_paging::descriptor::Attributes;
+use core::arch::asm;
+use core::sync::atomic::Ordering;
 
-#[allow(dead_code)]
-const KILOBYTE: u64 = 1048;
-#[allow(dead_code)]
-const MEGABYTE: u64 = KILOBYTE * 1048;
-#[allow(dead_code)]
-const GIGABYTE: u64 = MEGABYTE * 1048;
+use crate::{KERNEL_PHYS_BASE, println};
 
 pub const NORMAL_CACHEABLE: Attributes =
     Attributes::ATTRIBUTE_INDEX_0.union(Attributes::INNER_SHAREABLE);
-const DEVICE_MEM: Attributes = Attributes::ATTRIBUTE_INDEX_1
-    .union(Attributes::ACCESSED)
-    .union(Attributes::VALID)
-    .union(Attributes::NON_GLOBAL); // Device memory usually shouldn't be Global anyway, but acceptable here.
 
-const MAIR: u64 = (0xFF << 0) | (0x00 << 8);
-
-use aarch64_paging::{
-    descriptor::Attributes,
-    idmap::IdMap,
-    paging::{MemoryRegion, TranslationRegime},
-};
-use alloc::vec::Vec;
-use core::arch::asm;
-
-use crate::println;
-
-pub fn init_mmu(device_ranges: Vec<&MemoryRegion>) -> IdMap {
-    let mut memmap = IdMap::new(
-        0, //
-        0, // 48 bit vadresses
-        TranslationRegime::El1And0,
-    );
-    memmap
-        .map_range(
-            &MemoryRegion::new(0x40000000, 0x44000000),
-            NORMAL_CACHEABLE
-                | Attributes::NON_GLOBAL
-                | Attributes::VALID
-                | Attributes::ACCESSED
-                | Attributes::OUTER_SHAREABLE,
-        )
-        .expect("failed to map kernel");
-    for range in device_ranges {
-        memmap
-            .map_range(range, DEVICE_MEM)
-            .expect("failed to map uart");
-    }
+pub fn init_mmu() {
+    let mut par: u64;
     unsafe {
-        memmap.activate();
         asm!(
-            "msr tcr_el1, {val}",
-            val = in(reg) 0x00000000B5103510 as u64,
+            "at s1e1r, {va}",
+            "mrs {par}, par_el1",
+            va = in(reg) 0xFFFFFFFF80000000u64,
+            par = out(reg) par,
         );
-        println!("loaded tcr_el1");
-        asm!(
-            "msr mair_el1, {val}",
-            val = in(reg) MAIR as u64,
-        );
-        println!("loaded main_el1");
-        let mut sctlr: u64;
-        asm!(
-            "
-            mrs x0, sctlr_el1
-            ",
-            out("x0") sctlr
-        );
-        println!("read out sctlr: {:b}", sctlr);
-        // IMPORTANT: Ensure page table writes are visible and TLB is clean
-        asm!("dsb ish"); // Data Synchronization Barrier (Inner Shareable)
-        asm!("tlbi vmalle1"); // Invalidate local TLB (just in case)
-        asm!("dsb ish"); // Ensure invalidation completes
-        asm!("isb"); // Instruction Synchronization Barrier
-        asm!(
-            "
-            orr {val}, {val}, #1        // set M
-            msr sctlr_el1, {val}
-            isb
-            ",
-            val = inout(reg) sctlr
-        );
-        println!("read out sctlr: {:b}", sctlr);
+    }
+    let phys_base = if par & 1 == 0 {
+        par & 0x0000FFFFFFFFFFF000
+    } else {
+        println!("AT translation failed, using default base");
+        0x40000000u64
     };
-
-    memmap
+    KERNEL_PHYS_BASE.store(phys_base, Ordering::Relaxed);
 }

@@ -1,9 +1,15 @@
+use crate::KERNEL_PHYS_BASE;
 use aarch64_paging::{descriptor::PhysicalAddress, paging::PageTable};
 use alloc::alloc::{Layout, dealloc, handle_alloc_error};
 use core::ptr::NonNull;
+use core::sync::atomic::Ordering;
 
 #[derive(Debug)]
 pub struct ArbitraryTranslation;
+
+fn phys_base() -> usize {
+    KERNEL_PHYS_BASE.load(Ordering::Relaxed) as usize
+}
 
 impl aarch64_paging::paging::Translation for ArbitraryTranslation {
     fn allocate_table(
@@ -12,7 +18,7 @@ impl aarch64_paging::paging::Translation for ArbitraryTranslation {
         core::ptr::NonNull<aarch64_paging::paging::PageTable>,
         PhysicalAddress,
     ) {
-        // safety: dropping is the responsibility of the caller :3
+        let base = phys_base();
         let vaddr;
         let paddr;
         unsafe {
@@ -21,7 +27,7 @@ impl aarch64_paging::paging::Translation for ArbitraryTranslation {
             if vaddr.is_null() {
                 handle_alloc_error(layout)
             }
-            paddr = PhysicalAddress(vaddr as usize - 0xFFFFFFFF80000000 + 0x40000000);
+            paddr = PhysicalAddress(vaddr as usize - 0xFFFFFFFF80000000 + base);
         }
 
         (
@@ -34,9 +40,6 @@ impl aarch64_paging::paging::Translation for ArbitraryTranslation {
         &mut self,
         page_table: core::ptr::NonNull<aarch64_paging::paging::PageTable>,
     ) {
-        // SAFETY: Our caller promises that the memory was allocated by `allocate_table` on this
-        // `LinearTranslation` and not yet deallocated. `allocate_table` used the global allocator
-        // and appropriate layout by calling `PageTable::new()`.
         unsafe {
             dealloc(page_table.as_ptr() as *mut u8, Layout::new::<PageTable>());
         }
@@ -45,12 +48,13 @@ impl aarch64_paging::paging::Translation for ArbitraryTranslation {
         &self,
         pa: aarch64_paging::descriptor::PhysicalAddress,
     ) -> core::ptr::NonNull<aarch64_paging::paging::PageTable> {
-        NonNull::new((pa.0 + 0xFFFFFFFF80000000 - 0x40000000) as *mut PageTable)
+        let base = phys_base();
+        NonNull::new((pa.0 + 0xFFFFFFFF80000000 - base) as *mut PageTable)
             .expect("invalid physical page address recieved")
     }
 }
 
 pub fn kernel_virtual_to_physical(ptr: *mut u8) -> *mut u8 {
-    // SAFETY: unchecked cast, on the user to validate their pointers are in valid kernel memory
-    (ptr as usize - 0xFFFFFFFF80000000 + 0x40000000) as *mut u8
+    let base = phys_base();
+    (ptr as usize - 0xFFFFFFFF80000000 + base) as *mut u8
 }

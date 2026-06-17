@@ -1,8 +1,5 @@
 use crate::{
-    mem::{
-        mmu::NORMAL_CACHEABLE,
-        paging::{ArbitraryTranslation, kernel_virtual_to_physical},
-    },
+    mem::paging::{ArbitraryTranslation, kernel_virtual_to_physical},
     println,
     scheduler::{
         CpuScheduler,
@@ -19,6 +16,7 @@ use aarch64_paging::{
 use alloc::{alloc::alloc, collections::btree_map::BTreeMap};
 use anyhow::{Ok, Result, anyhow, bail};
 use core::alloc::Layout;
+use core::arch::asm;
 use elf::{ElfBytes, abi::PT_LOAD, endian::AnyEndian};
 
 /// Quick and Dirty Scheduler
@@ -39,11 +37,8 @@ impl CpuScheduler for QDScheduler {
     fn schedule(&mut self) -> Result<SchedulerThread> {
         let process = self.processes.get(&0).unwrap();
         unsafe {
-            println!("activating memmap {:#?}", process.memory_map);
-            println!(
-                "location of previous ttbr0: {}",
-                process.memory_map.activate()
-            );
+            process.memory_map.activate();
+            asm!("dsb sy", "isb");
         }
         Ok(process.thread.clone())
     }
@@ -63,22 +58,23 @@ impl CpuScheduler for QDScheduler {
                 return;
             }
             let allocation;
-            // safety: this is unsafe, and leaks memory after process death, TODO: fix
             unsafe {
                 let size = header.p_memsz as usize;
                 let layout = Layout::from_size_align(size, PAGE_SIZE).unwrap();
                 allocation = alloc(layout);
+                // Copy segment data from ELF into allocation
+                let seg_result = elf.segment_data(&header);
+                if let core::result::Result::Ok(data) = seg_result {
+                    core::ptr::copy_nonoverlapping(data.as_ptr(), allocation, data.len());
+                    if (header.p_memsz as usize) > data.len() {
+                        core::ptr::write_bytes(
+                            allocation.add(data.len()),
+                            0,
+                            header.p_memsz as usize - data.len(),
+                        );
+                    }
+                }
             }
-            println!(
-                "va range {} \n pa {:} allocation va {:x}",
-                &MemoryRegion::new(
-                    header.p_vaddr as usize,
-                    (header.p_vaddr + header.p_memsz) as usize,
-                ),
-                PhysicalAddress(kernel_virtual_to_physical(allocation) as usize),
-                allocation as usize
-            );
-            //TODO: memcpy from elf file to allocation
             memmap
                 .map_range(
                     &MemoryRegion::new(

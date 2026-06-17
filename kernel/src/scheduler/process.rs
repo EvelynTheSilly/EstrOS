@@ -34,7 +34,6 @@ pub fn elf_flags_to_mmu_constrains(flags: u32) -> Attributes {
     let write = flags & 0x2 != 0;
     let mut acc = NORMAL_CACHEABLE
         | Attributes::PXN
-        | Attributes::USER
         | Attributes::VALID
         | Attributes::ACCESSED
         | Attributes::NON_GLOBAL;
