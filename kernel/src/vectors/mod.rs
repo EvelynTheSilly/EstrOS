@@ -90,5 +90,7 @@ panicking_function!(el1_sp0_irq_handler);
 panicking_function!(el1_sp0_fiq_handler);
 panicking_function!(el1_sp0_serror_handler);
 panicking_vector_handler_block!(el1_spx);
-panicking_vector_handler_block!(el0_aarch64);
+panicking_function!(el0_aarch64_irq_handler);
+panicking_function!(el0_aarch64_fiq_handler);
+panicking_function!(el0_aarch64_serror_handler);
 panicking_vector_handler_block!(el0_aarch32);

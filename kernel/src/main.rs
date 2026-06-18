@@ -5,6 +5,7 @@
 #![feature(likely_unlikely)]
 #![feature(const_trait_impl)]
 #![feature(const_default)]
+#![feature(maybe_uninit_array_assume_init)]
 #![allow(unused_unsafe)]
 #![allow(
     clippy::doc_markdown,
@@ -44,6 +45,7 @@ mod multiprocessor;
 mod rng;
 mod scheduler;
 mod syncronisation;
+mod syscalls;
 mod uart;
 mod vectors;
 extern crate alloc;

@@ -5,13 +5,13 @@ use core::ptr::NonNull;
 use core::sync::atomic::Ordering;
 
 #[derive(Debug)]
-pub struct ArbitraryTranslation;
+pub struct EstrTranslation;
 
 fn phys_base() -> usize {
     KERNEL_PHYS_BASE.load(Ordering::Relaxed) as usize
 }
 
-impl aarch64_paging::paging::Translation for ArbitraryTranslation {
+impl aarch64_paging::paging::Translation for EstrTranslation {
     fn allocate_table(
         &mut self,
     ) -> (

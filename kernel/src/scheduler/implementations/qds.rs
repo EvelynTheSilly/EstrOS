@@ -1,9 +1,10 @@
 use crate::{
-    mem::paging::{ArbitraryTranslation, kernel_virtual_to_physical},
+    mem::paging::{EstrTranslation, kernel_virtual_to_physical},
     println,
     scheduler::{
         CpuScheduler,
-        process::{Process, elf_flags_to_mmu_constrains},
+        allocations::{SchedulerPointer, SegmentAllocation, elf_flags_to_mmu_constrains},
+        process::Process,
         threads::SchedulerThread,
     },
     vectors::cpu_state::State,
@@ -13,7 +14,7 @@ use aarch64_paging::{
     descriptor::PhysicalAddress,
     paging::{Constraints, MemoryRegion, PAGE_SIZE},
 };
-use alloc::{alloc::alloc, collections::btree_map::BTreeMap};
+use alloc::{alloc::alloc, collections::btree_map::BTreeMap, vec::Vec};
 use anyhow::{Ok, Result, anyhow, bail};
 use core::alloc::Layout;
 use core::arch::asm;
@@ -47,12 +48,13 @@ impl CpuScheduler for QDScheduler {
         let pheaders = elf.segments().ok_or(anyhow!("no valid headers"))?;
         let load_headers = pheaders.iter().filter(|header| header.p_type == PT_LOAD);
         let mut memmap = Mapping::new(
-            ArbitraryTranslation,
+            EstrTranslation,
             0,
             0,
             aarch64_paging::paging::TranslationRegime::El1And0,
             aarch64_paging::paging::VaRange::Lower,
         );
+        let mut segments = Vec::new();
         load_headers.for_each(|header| {
             if header.p_memsz == 0 {
                 return;
@@ -74,6 +76,10 @@ impl CpuScheduler for QDScheduler {
                         );
                     }
                 }
+                segments.push(SegmentAllocation {
+                    header,
+                    allocation: SchedulerPointer(allocation),
+                });
             }
             memmap
                 .map_range(
@@ -105,7 +111,7 @@ impl CpuScheduler for QDScheduler {
         self.processes.insert(
             pid,
             Process {
-                //segments: segments,
+                segments: segments,
                 memory_map: memmap,
                 thread: SchedulerThread {
                     state: State {
@@ -124,5 +130,19 @@ impl CpuScheduler for QDScheduler {
             bail!("invalid pid");
         }
         Ok(())
+    }
+    fn process_mem_read(&self, pid: u64, dest: &mut [u8], process_pointer: usize) -> Result<()> {
+        let process = self.processes.get(&pid);
+        let Some(process) = process else {
+            return Err(anyhow!("Invalid Pid"));
+        };
+        process.mem_read(dest, process_pointer)?;
+        Ok(())
+    }
+    fn process_mem_write(&mut self, _pid: u64) -> Result<()> {
+        todo!("mem write isnt implemented at all yet")
+    }
+    fn process_mem_compare(&self, _pid: u64) -> bool {
+        todo!("mem compare isnt implemented at all yet")
     }
 }
