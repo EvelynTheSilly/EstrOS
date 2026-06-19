@@ -16,5 +16,10 @@ SECTIONS
     } : text
     . = ALIGN(0x1000);
 	.data : { *(.data*) } : data
-	.bss : { *(.bss COMMON) } : data
+	.bss : {
+		*(.bss COMMON);
+		. = ALIGN(16);
+		. += 0x10000;
+		_stack = .;
+	} : data
 }
