@@ -11,6 +11,7 @@ extern "C" fn _start() {
         adr x0, _hello
         mov x1, #23
         svc #1
+        svc #1
         b .
     _hello:
         .ascii \"\nHello from userspace!\\n\"

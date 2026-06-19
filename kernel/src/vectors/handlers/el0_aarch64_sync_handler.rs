@@ -17,7 +17,7 @@ extern "C" fn el0_aarch64_sync_handler(state: &mut cpu_state::State) {
     println!("esr: {:X} ec: {:X} iss: {}", esr_el1, ec, iss);
     match ec {
         21 => {
-            println!("syscall number {}", iss);
+            println!("processing syscall number {}", iss);
             // TODO: handle more than one process
             handle_syscall(state, iss, 0);
         }
@@ -28,5 +28,4 @@ extern "C" fn el0_aarch64_sync_handler(state: &mut cpu_state::State) {
             );
         }
     };
-    todo!("return from syscall")
 }
