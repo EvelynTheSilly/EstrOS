@@ -53,6 +53,7 @@ dependencies = [
  "elf",
  "limine",
  "qemu-exit",
+ "thiserror",
  "tock-registers",
 ]
 

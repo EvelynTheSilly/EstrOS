@@ -3,9 +3,9 @@
 use crate::scheduler::implementations::GlobalScheduler;
 use crate::syncronisation::GlobalSharedLock;
 use crate::vectors::cpu_state::State;
-use anyhow::Result;
 use elf::ElfBytes;
 use elf::endian::AnyEndian;
+use thiserror::Error;
 use threads::SchedulerThread;
 
 mod allocations;
@@ -23,6 +23,22 @@ pub trait CpuScheduler: Sized {
     fn process_mem_read(&self, pid: u64, dest: &mut [u8], process_pointer: usize) -> Result<()>;
     fn process_mem_write(&mut self, pid: u64) -> Result<()>;
     fn process_mem_compare(&self, pid: u64) -> bool;
+}
+
+type Result<T> = core::result::Result<T, CpuSchedulerError>;
+
+#[derive(Error, Debug)]
+pub(crate) enum CpuSchedulerError {
+    #[error("Invalid Pid {0}")]
+    InvalidPid(u64),
+    #[error("Invalid Tid {0}")]
+    InvalidTid(u64),
+    #[error("there are no processes to schedule")]
+    NoProcesses,
+    #[error("couldnt parse the elf file")]
+    ElfParseError,
+    #[error("process memory error")]
+    ProcessMemoryError,
 }
 
 pub static PROCESS_MANAGER: GlobalSharedLock<GlobalScheduler> =

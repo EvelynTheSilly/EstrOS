@@ -2,7 +2,7 @@ use crate::{
     mem::paging::{EstrTranslation, kernel_virtual_to_physical},
     println,
     scheduler::{
-        CpuScheduler,
+        CpuScheduler, CpuSchedulerError, Result,
         allocations::{SchedulerPointer, SegmentAllocation, elf_flags_to_mmu_constrains},
         process::Process,
         threads::SchedulerThread,
@@ -15,7 +15,6 @@ use aarch64_paging::{
     paging::{Constraints, MemoryRegion, PAGE_SIZE},
 };
 use alloc::{alloc::alloc, collections::btree_map::BTreeMap, vec::Vec};
-use anyhow::{Ok, Result, anyhow, bail};
 use core::alloc::Layout;
 use core::arch::asm;
 use elf::{ElfBytes, abi::PT_LOAD, endian::AnyEndian};
@@ -45,7 +44,7 @@ impl CpuScheduler for QDScheduler {
     }
     ///returns a PID
     fn launch_process(&mut self, elf: ElfBytes<AnyEndian>) -> Result<u64> {
-        let pheaders = elf.segments().ok_or(anyhow!("no valid headers"))?;
+        let pheaders = elf.segments().ok_or(CpuSchedulerError::ElfParseError)?;
         let load_headers = pheaders.iter().filter(|header| header.p_type == PT_LOAD);
         let mut memmap = Mapping::new(
             EstrTranslation,
@@ -127,7 +126,7 @@ impl CpuScheduler for QDScheduler {
         if let Some(process) = self.processes.get_mut(&pid) {
             process.thread.state = state;
         } else {
-            bail!("invalid pid");
+            return Err(CpuSchedulerError::InvalidPid(pid));
         }
         Ok(())
     }
@@ -135,15 +134,15 @@ impl CpuScheduler for QDScheduler {
         if self.processes.remove(&pid).is_some() {
             Ok(())
         } else {
-            Err(anyhow!("invalid pid"))
+            Err(CpuSchedulerError::InvalidPid(pid))
         }
     }
     fn process_mem_read(&self, pid: u64, dest: &mut [u8], process_pointer: usize) -> Result<()> {
         let process = self.processes.get(&pid);
         let Some(process) = process else {
-            return Err(anyhow!("Invalid Pid"));
+            return Err(CpuSchedulerError::InvalidPid(pid));
         };
-        process.mem_read(dest, process_pointer)?;
+        process.mem_read(dest, process_pointer).map_err(|_| CpuSchedulerError::ProcessMemoryError)?;
         Ok(())
     }
     fn process_mem_write(&mut self, _pid: u64) -> Result<()> {
