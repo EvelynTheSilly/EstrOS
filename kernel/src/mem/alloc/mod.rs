@@ -1,10 +1,11 @@
+use crate::println;
 use core::alloc::GlobalAlloc;
 use core::alloc::Layout;
 use core::cell::UnsafeCell;
 use core::ptr::null_mut;
 use core::sync::atomic::{AtomicUsize, Ordering::Relaxed};
 
-const ARENA_SIZE: usize = 128 * 1024; // 128kb arena
+const ARENA_SIZE: usize = 256 * 1024; // 256kb arena
 const MAX_SUPPORTED_ALIGN: usize = 4096;
 /// taken straight from the rust documentations, should work for some time
 #[repr(C, align(4096))] // 4096 == MAX_SUPPORTED_ALIGN
@@ -48,7 +49,7 @@ unsafe impl GlobalAlloc for ArenaAllocator {
             })
             .is_err()
         {
-            return null_mut();
+            panic!("KERNEL OOM WE ARE SO FUCKED");
         }
         unsafe { self.arena.get().cast::<u8>().add(allocated) }
     }
