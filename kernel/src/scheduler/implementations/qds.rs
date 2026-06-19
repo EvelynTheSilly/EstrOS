@@ -131,6 +131,13 @@ impl CpuScheduler for QDScheduler {
         }
         Ok(())
     }
+    fn kill(&mut self, pid: u64) -> Result<()> {
+        if self.processes.remove(&pid).is_some() {
+            Ok(())
+        } else {
+            Err(anyhow!("invalid pid"))
+        }
+    }
     fn process_mem_read(&self, pid: u64, dest: &mut [u8], process_pointer: usize) -> Result<()> {
         let process = self.processes.get(&pid);
         let Some(process) = process else {
