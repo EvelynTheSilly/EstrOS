@@ -48,15 +48,21 @@ build_img:
     sgdisk -e build/disk.img
 
 build_init opt="debug":
-    if [ -f "config.sh" ]; then \
-    source ./config.sh;echo "found $INIT"; \
-    else \
-    source ./exampleconfig.sh; \
-    fi; \
+    #! /usr/bin/env nix-shell
+    #! nix-shell -i bash -p bash
+    set -e
+    if [ -f "config.sh" ]; then 
+    source ./config.sh;echo "found $INIT"; 
+    else 
+    source ./exampleconfig.sh; 
+    fi; 
     cargo build --bin $INIT $( [ {{ opt }} = release ] && printf '%s' --release ); \
     cp ./target/aarch64-none-custom/{{ opt }}/$INIT ./build/init.elf
 
 build opt="debug":
+    #! /usr/bin/env nix-shell
+    #! nix-shell -i bash -p bash
+    set -e
     just create_temp_dir ./bin
     just create_temp_dir ./build
     just build_init
