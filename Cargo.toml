@@ -1,6 +1,6 @@
 [workspace]
 resolver = "3"
-members = ["kernel", "user/minimal_init", "lib/estrogen"]
+members = ["kernel", "user/hello_world", "lib/estrogen"]
 
 [profile.dev]
 panic = "abort"

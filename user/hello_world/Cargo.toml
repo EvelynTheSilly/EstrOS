@@ -1,5 +1,5 @@
 [package]
-name = "minimal"
+name = "hello_world"
 version = "0.1.0"
 edition = "2024"
 
@@ -8,7 +8,7 @@ estrogen = { version = "0.1.0", path = "../../lib/estrogen" }
 
 
 [[bin]]
-name = "minimal_init"
+name = "hello_world"
 path = "src/main.rs"
 test = false
 doctest = false
