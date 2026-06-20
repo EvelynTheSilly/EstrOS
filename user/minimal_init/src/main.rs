@@ -1,10 +1,8 @@
 #![no_std]
 #![no_main]
 
-use core::{
-    arch::{asm, naked_asm},
-    panic::PanicInfo,
-};
+use core::{arch::naked_asm, panic::PanicInfo};
+use estrogen::syscall;
 
 #[unsafe(no_mangle)]
 #[unsafe(naked)]
@@ -25,16 +23,16 @@ extern "C" fn _start() {
 fn panic_handler(_: &PanicInfo) -> ! {
     loop {}
 }
-const HELLO_FROM_RUST: &str = "haiii, from rust this time";
 
 fn main() {
-    unsafe {
-        asm!(
-            "
-            svc #1
-            ",
-            in("x0") HELLO_FROM_RUST.as_ptr(),
-            in("x1") HELLO_FROM_RUST.len()
-        );
-    }
+    let line1 = "haiii";
+    let line2 = "this is userspace code";
+    let line3 = "it can print to the console";
+    let line4 = "im gonna exit now o/";
+
+    syscall!(1, line1.as_ptr(), line1.len());
+    syscall!(1, line2.as_ptr(), line2.len());
+    syscall!(1, line3.as_ptr(), line3.len());
+    syscall!(1, line4.as_ptr(), line4.len());
+    syscall!(2);
 }
