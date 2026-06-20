@@ -1,6 +1,5 @@
 use crate::{
     cpu_manager::{CPU_STATE_MANAGER, CpuPersistantState, get_cpu_id},
-    println,
     scheduler::{CpuScheduler, CpuSchedulerError, PROCESS_MANAGER},
     syncronisation::Mutex,
     syscalls::handle_syscall,

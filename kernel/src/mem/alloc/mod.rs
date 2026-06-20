@@ -1,4 +1,3 @@
-use crate::println;
 use core::alloc::GlobalAlloc;
 use core::alloc::Layout;
 use core::cell::UnsafeCell;
