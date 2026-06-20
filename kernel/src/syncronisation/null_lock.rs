@@ -26,8 +26,8 @@ impl<T> NullLock<T> {
 }
 
 impl<T> Mutex for NullLock<T> {
-    type Data = T;
-    fn lock<'a, R>(&'a self, f: impl FnOnce(&'a mut Self::Data) -> R) -> R {
+    type Data<'a> = &'a mut T where T: 'a;
+    fn lock<'a, R>(&'a self, f: impl FnOnce(Self::Data<'a>) -> R) -> R {
         // In a real lock, there would be code encapsulating this line that ensures that this
         // mutable reference will ever only be given out once at a time.
         let data = unsafe { &mut *self.data.get() };
