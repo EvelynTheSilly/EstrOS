@@ -14,7 +14,8 @@ extern "C" fn _start() {
         ldr x0, =_stack
         mov sp, x0
         bl {}
-        b .
+        svc #2
+        b . // fallback
         ",
         sym main
     );

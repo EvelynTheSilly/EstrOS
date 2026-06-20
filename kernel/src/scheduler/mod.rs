@@ -14,6 +14,8 @@ mod process;
 mod threads;
 
 pub trait CpuScheduler: Sized {
+    fn activate_memory_map(&mut self, pid: u64) -> Result<usize>;
+    fn deactivate_memory_map(&mut self, pid: u64, previous_ttbr: usize);
     fn report_thread_state(&mut self, pid: u64, tid: u64, state: State) -> Result<()>;
     fn launch_process(&mut self, elf: ElfBytes<AnyEndian>) -> Result<u64>;
     /// returns pid and tid in that order

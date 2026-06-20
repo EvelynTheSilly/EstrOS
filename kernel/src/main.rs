@@ -20,6 +20,7 @@
 #![warn(clippy::missing_const_for_fn)]
 
 use crate::{
+    cpu_manager::{CPU_STATE_MANAGER, CpuPersistantState, get_cpu_id},
     mem::mmu,
     multiprocessor::mp_init,
     scheduler::{CpuScheduler, PROCESS_MANAGER},
@@ -37,6 +38,7 @@ use limine::{
 pub(crate) static KERNEL_PHYS_BASE: AtomicU64 = AtomicU64::new(0);
 
 mod boot;
+mod cpu_manager;
 mod drivers;
 mod dtb;
 mod irqs;
@@ -66,7 +68,7 @@ static _END_MARKER: RequestsEndMarker = RequestsEndMarker::new();
 
 #[panic_handler]
 fn panic(info: &PanicInfo) -> ! {
-    println!("KERNEL PANIC: {}", { info.message() });
+    println!("KERNEL PANIC: {}\nat {:?}", info.message(), info.location());
     loop {
         wfi();
     }
@@ -93,7 +95,19 @@ pub extern "C" fn kernel_init() {
 
 extern "C" fn get_init_process(initial_thread_state: *mut State) {
     unsafe {
-        let thread = PROCESS_MANAGER.lock(|manager| manager.schedule().unwrap());
+        let (pid, tid, thread) = PROCESS_MANAGER.lock(|scheduler| scheduler.schedule().unwrap());
+        let ttbr = PROCESS_MANAGER.lock(|scheduler| {
+            scheduler
+                .activate_memory_map(pid)
+                .expect("failed to activate init memory map")
+        });
+        CPU_STATE_MANAGER.lock(|cpu_manager| {
+            let cpu = cpu_manager
+                .entry(get_cpu_id())
+                .or_insert(CpuPersistantState::new());
+            cpu.submit_pid_tid(pid, tid);
+            cpu.submit_ttbr(ttbr);
+        });
         *initial_thread_state = thread.state;
         asm!("    tlbi vmalle1");
         asm!("    dsb sy");

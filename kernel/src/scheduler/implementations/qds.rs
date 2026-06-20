@@ -35,11 +35,10 @@ impl QDScheduler {
 
 impl CpuScheduler for QDScheduler {
     fn schedule(&mut self) -> Result<(u64, u64, SchedulerThread)> {
-        let process = self.processes.get(&0).unwrap();
-        unsafe {
-            process.memory_map.activate();
-            asm!("dsb sy", "isb");
-        }
+        let process = self
+            .processes
+            .get(&0)
+            .ok_or(CpuSchedulerError::NoProcesses)?;
         Ok((
             0,
             0,
@@ -49,6 +48,18 @@ impl CpuScheduler for QDScheduler {
                 .expect("should have thread id 0")
                 .clone(),
         ))
+    }
+    fn activate_memory_map(&mut self, pid: u64) -> Result<usize> {
+        let process = self
+            .processes
+            .get(&pid)
+            .ok_or(CpuSchedulerError::InvalidPid(pid))?;
+        let previous_ttbr;
+        unsafe {
+            previous_ttbr = process.memory_map.activate();
+            asm!("dsb sy", "isb");
+        }
+        Ok(previous_ttbr)
     }
     ///returns a PID
     fn launch_process(&mut self, elf: ElfBytes<AnyEndian>) -> Result<u64> {
@@ -135,9 +146,16 @@ impl CpuScheduler for QDScheduler {
         );
         Ok(pid)
     }
-    fn report_thread_state(&mut self, pid: u64, _tid: u64, state: State) -> Result<()> {
+    fn deactivate_memory_map(&mut self, pid: u64, previous_ttbr: usize) {
+        unsafe {
+            if let Some(process) = self.processes.get_mut(&pid) {
+                process.memory_map.deactivate(previous_ttbr);
+            }
+        }
+    }
+    fn report_thread_state(&mut self, pid: u64, tid: u64, state: State) -> Result<()> {
         if let Some(process) = self.processes.get_mut(&pid) {
-            process.threads.get_mut(&0).unwrap().state = state;
+            process.threads.get_mut(&tid).unwrap().state = state;
         } else {
             return Err(CpuSchedulerError::InvalidPid(pid));
         }
