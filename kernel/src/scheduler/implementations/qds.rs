@@ -34,13 +34,21 @@ impl QDScheduler {
 }
 
 impl CpuScheduler for QDScheduler {
-    fn schedule(&mut self) -> Result<SchedulerThread> {
+    fn schedule(&mut self) -> Result<(u64, u64, SchedulerThread)> {
         let process = self.processes.get(&0).unwrap();
         unsafe {
             process.memory_map.activate();
             asm!("dsb sy", "isb");
         }
-        Ok(process.thread.clone())
+        Ok((
+            0,
+            0,
+            process
+                .threads
+                .get(&0)
+                .expect("should have thread id 0")
+                .clone(),
+        ))
     }
     ///returns a PID
     fn launch_process(&mut self, elf: ElfBytes<AnyEndian>) -> Result<u64> {
@@ -106,25 +114,30 @@ impl CpuScheduler for QDScheduler {
             })
             .unwrap();
         let start_address = start_sym.st_value;
+        let mut threads = BTreeMap::new();
+        threads.insert(
+            0,
+            SchedulerThread {
+                state: State {
+                    elr: start_address,
+                    ..Default::default()
+                },
+            },
+        );
 
         self.processes.insert(
             pid,
             Process {
                 segments: segments,
                 memory_map: memmap,
-                thread: SchedulerThread {
-                    state: State {
-                        elr: start_address,
-                        ..Default::default()
-                    },
-                },
+                threads,
             },
         );
         Ok(pid)
     }
     fn report_thread_state(&mut self, pid: u64, _tid: u64, state: State) -> Result<()> {
         if let Some(process) = self.processes.get_mut(&pid) {
-            process.thread.state = state;
+            process.threads.get_mut(&0).unwrap().state = state;
         } else {
             return Err(CpuSchedulerError::InvalidPid(pid));
         }
@@ -142,7 +155,9 @@ impl CpuScheduler for QDScheduler {
         let Some(process) = process else {
             return Err(CpuSchedulerError::InvalidPid(pid));
         };
-        process.mem_read(dest, process_pointer).map_err(|_| CpuSchedulerError::ProcessMemoryError)?;
+        process
+            .mem_read(dest, process_pointer)
+            .map_err(|_| CpuSchedulerError::ProcessMemoryError)?;
         Ok(())
     }
     fn process_mem_write(&mut self, _pid: u64) -> Result<()> {

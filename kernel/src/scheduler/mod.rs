@@ -16,7 +16,8 @@ mod threads;
 pub trait CpuScheduler: Sized {
     fn report_thread_state(&mut self, pid: u64, tid: u64, state: State) -> Result<()>;
     fn launch_process(&mut self, elf: ElfBytes<AnyEndian>) -> Result<u64>;
-    fn schedule(&mut self) -> Result<SchedulerThread>;
+    /// returns pid and tid in that order
+    fn schedule(&mut self) -> Result<(u64, u64, SchedulerThread)>;
     fn kill(&mut self, pid: u64) -> Result<()>;
 
     /// writes `dest.len` bytes from the pointer to the destination buffer, returns a error variant and doesnt touch the dest buffer if the memory range isnt in the process memory map or if the process doesnt exist

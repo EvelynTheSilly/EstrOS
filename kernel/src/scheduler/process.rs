@@ -3,14 +3,14 @@ use crate::{
     scheduler::{allocations::SegmentAllocation, threads::SchedulerThread},
 };
 use aarch64_paging::{Mapping, paging::MemoryRegion};
-use alloc::vec::Vec;
+use alloc::{collections::btree_map::BTreeMap, vec::Vec};
 use anyhow::Result;
 use core::sync::atomic::Ordering;
 
 pub struct Process {
     pub segments: Vec<SegmentAllocation>,
     pub memory_map: Mapping<EstrTranslation>,
-    pub thread: SchedulerThread, //pub threads: BTreeMap<u64, SchedulerThread>,
+    pub threads: BTreeMap<u64, SchedulerThread>,
 }
 
 impl Process {
