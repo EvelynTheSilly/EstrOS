@@ -2,7 +2,7 @@
 #![no_main]
 
 use core::{arch::naked_asm, panic::PanicInfo};
-use estrogen::syscall;
+use estrogen::{println, syscall};
 
 #[unsafe(no_mangle)]
 #[unsafe(naked)]
@@ -34,5 +34,6 @@ fn main() {
     syscall!(1, line2.as_ptr(), line2.len());
     syscall!(1, line3.as_ptr(), line3.len());
     syscall!(1, line4.as_ptr(), line4.len());
+    println!("a formatted string: {}", "yippee");
     syscall!(2);
 }

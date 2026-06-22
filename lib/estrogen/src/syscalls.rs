@@ -9,18 +9,18 @@ macro_rules! syscall {
     }};
 
     (@build $nr:expr, ($($tail:tt)*) $idx:tt) => {
-        core::arch::asm!(
+        ::core::arch::asm!(
             "svc {nr}",
             nr = const $nr,
             $($tail)*
-        );
+        )
     };
     (@build $nr:expr, ($($tail:tt)*) $idx:tt,) => {
         core::arch::asm!(
             "svc {nr}",
             nr = const $nr,
             $($tail)*
-        );
+        )
     };
     (@build $nr:expr, ($($tail:tt)*) 0, $a:expr $(, $rest:expr)*) => {
         $crate::syscall!(@build $nr, (in("x0") $a, $($tail)*) 1 $(, $rest)*)
