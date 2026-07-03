@@ -12,7 +12,7 @@ mod implementations;
 pub mod process;
 mod threads;
 
-pub trait CpuScheduler: Sized {
+pub trait CpuScheduler: Sized + Default {
     fn activate_memory_map(&mut self, pid: u64) -> Result<usize>;
     fn deactivate_memory_map(&mut self, pid: u64, previous_ttbr: usize);
     fn report_thread_state(&mut self, pid: u64, tid: u64, state: State) -> Result<()>;
@@ -47,4 +47,4 @@ pub(crate) enum CpuSchedulerError {
 }
 
 pub static PROCESS_MANAGER: GlobalSharedLock<GlobalScheduler> =
-    GlobalSharedLock::new(GlobalScheduler::new());
+    GlobalSharedLock::new(GlobalScheduler::default());

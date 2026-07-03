@@ -9,6 +9,7 @@ use core::arch::asm;
 
 /// Quick and Dirty Scheduler
 /// not meant to truly be functional, rewrite later
+#[derive(Default)]
 pub struct QDScheduler {
     processes: BTreeMap<u64, Process>,
 }
