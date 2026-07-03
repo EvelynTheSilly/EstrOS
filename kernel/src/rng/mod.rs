@@ -1,4 +1,6 @@
 #![allow(dead_code)]
+use core::hint::unlikely;
+
 use crate::{rng::implementations::xorshift::XORShiftRng, syncronisation::GlobalSharedLock};
 
 mod implementations;
@@ -31,6 +33,13 @@ pub trait Rng {
     }
     fn rand_i8(&mut self) -> i8 {
         u8::cast_signed(self.rand_u8())
+    }
+    fn rand_u64_not_by(&mut self, fun: impl Fn(u64) -> bool) -> u64 {
+        let mut ret = self.rand_u64();
+        while unlikely(fun(ret)) {
+            ret = self.rand_u64();
+        }
+        ret
     }
 }
 
