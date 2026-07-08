@@ -6,7 +6,6 @@ use crate::{
 
 pub fn exit(_state: &mut State, pid: u64) {
     PROCESS_MANAGER.lock(|scheduler| {
-        //
         scheduler
             .kill_process(pid)
             .expect("the pid should be saved correctly");
