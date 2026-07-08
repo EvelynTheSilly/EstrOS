@@ -3,6 +3,8 @@ use core::arch::global_asm;
 #[repr(C)]
 #[derive(Debug, Default, Clone)]
 pub struct State {
+    pub sp: u64,
+    pub(crate) _pad: u64,
     pub spsr: u64,
     pub elr: u64,
     pub x: [u64; 31],
@@ -30,7 +32,9 @@ global_asm!(
         mrs x0, spsr_el1
         mrs x1, elr_el1
         stp x0, x1, [sp, #-16]!
-        
+        mrs x0, sp_el0
+        stp x0, xzr, [sp, #-16]!
+
         mov x0, sp
         ret
 "
@@ -40,6 +44,8 @@ global_asm!(
     r"
     .global load_cpu_state
     load_cpu_state:
+        ldp x0, x1, [sp], #16
+        msr sp_el0, x0
         ldp x0, x1, [sp], #16
         msr spsr_el1, x0
         msr elr_el1, x1
