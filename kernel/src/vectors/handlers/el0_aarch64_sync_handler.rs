@@ -1,5 +1,6 @@
 use crate::{
     cpu_manager::{CPU_STATE_MANAGER, CpuPersistantState, get_cpu_id},
+    println,
     scheduler::{CpuScheduler, CpuSchedulerError, PROCESS_MANAGER},
     syncronisation::Mutex,
     syscalls::handle_syscall,
@@ -39,13 +40,12 @@ extern "C" fn el0_aarch64_sync_handler(state: &mut cpu_state::State) {
     });
     match ec {
         21 => {
-            // TODO: handle more than one process
             handle_syscall(state, iss, pid.unwrap());
         }
         _ => {
             panic!(
-                "el0_aarch64_sync_handler triggered\nunknown EC: {}\n state dump \n{:x?}",
-                ec, state
+                "el0_aarch64_sync_handler triggered with unknown EC: \n{}\n state dump \n{:x?} \nesr: {:x?}",
+                ec, state, esr_el1
             );
         }
     };

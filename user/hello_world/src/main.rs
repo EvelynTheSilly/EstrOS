@@ -33,7 +33,7 @@ fn main() {
     syscall!(1, line1.as_ptr(), line1.len());
     syscall!(1, line2.as_ptr(), line2.len());
     syscall!(1, line3.as_ptr(), line3.len());
+    println!("it can even {}", "print formatted");
     syscall!(1, line4.as_ptr(), line4.len());
-    println!("a formatted string: {}", "yippee");
     syscall!(2);
 }

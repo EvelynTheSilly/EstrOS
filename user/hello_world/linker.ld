@@ -19,7 +19,7 @@ SECTIONS
 	.bss : {
 		*(.bss COMMON);
 		. = ALIGN(16);
-		. += 0x10000;
+		. += 0x1000;
 		_stack = .;
 	} : data
 }
