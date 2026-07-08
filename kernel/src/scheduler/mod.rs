@@ -14,7 +14,7 @@ mod threads;
 
 pub trait CpuScheduler: Sized + Default {
     fn activate_memory_map(&mut self, pid: u64) -> Result<usize>;
-    fn deactivate_memory_map(&mut self, pid: u64, previous_ttbr: usize);
+    fn deactivate_memory_map(&mut self, pid: u64, previous_ttbr: usize) -> Result<()>;
     fn report_thread_state(&mut self, pid: u64, tid: u64, state: State) -> Result<()>;
     /// a process always spawns with one thread at the _start label
     fn launch_process(&mut self, elf: Process) -> Result<u64>;

@@ -72,12 +72,15 @@ impl CpuScheduler for QDScheduler {
             .insert(tid, thread);
         Ok(tid)
     }
-    fn deactivate_memory_map(&mut self, pid: u64, previous_ttbr: usize) {
+    fn deactivate_memory_map(&mut self, pid: u64, previous_ttbr: usize) -> Result<()> {
         unsafe {
-            if let Some(process) = self.processes.get_mut(&pid) {
-                process.memory_map.deactivate(previous_ttbr);
-            }
+            self.processes
+                .get_mut(&pid)
+                .ok_or(CpuSchedulerError::InvalidPid(pid))?
+                .memory_map
+                .deactivate(previous_ttbr);
         }
+        Ok(())
     }
     fn report_thread_state(&mut self, pid: u64, tid: u64, state: State) -> Result<()> {
         if let Some(process) = self.processes.get_mut(&pid) {
