@@ -1,15 +1,21 @@
-qemuflags := " -M virt \
+device_flags := " -M virt,acpi=off \
     -cpu cortex-a57 \
+    -device ramfb \
+    -device qemu-xhci \
+    -device usb-kbd \
+    -device usb-mouse \
+"
+qemuflags := device_flags + " \
+    -dtb build/dtb.dtb \
     -drive if=pflash,unit=0,format=raw,file=bin/AAVMF_CODE.fd,readonly=on \
     -drive if=pflash,unit=1,format=raw,file=bin/AAVMF_VARS.fd \
     -drive file=build/disk.img,format=raw \
     -serial mon:stdio \
-    -device ramfb \
-	-device qemu-xhci \
-	-device usb-kbd \
-	-device usb-mouse \
     -semihosting \
 "
+
+dump_dtb:
+    qemu-system-aarch64 {{ device_flags }} -display none -M virt,dumpdtb=build/dtb.dtb
 
 build_kernel_elf opt="debug":
     if [ -f "config.sh" ]; then \
@@ -62,9 +68,11 @@ build_init opt="debug":
 build opt="debug":
     #! /usr/bin/env nix-shell
     #! nix-shell -i bash -p bash
+    echo {{ qemuflags }}
     set -e
     just create_temp_dir ./bin
     just create_temp_dir ./build
+    just dump_dtb
     just build_init
     just build_kernel_elf {{ opt }}
     just get_binary_blobs

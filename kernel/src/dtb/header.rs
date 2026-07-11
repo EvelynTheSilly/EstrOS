@@ -9,15 +9,15 @@ pub struct DtbHeader {
     pub off_dt_struct: u32,
     pub off_dt_strings: u32,
     pub off_mem_rsvmap: u32,
-    version: u32,
+    pub version: u32,
     last_comp_version: u32,
-    boot_cpuid_phys: u32,
+    pub boot_cpuid_phys: u32,
     pub size_dt_strings: u32,
     pub size_dt_structs: u32,
 }
 
 impl DtbHeader {
-    pub unsafe fn new(base: *mut u64) -> DtbHeader {
+    pub unsafe fn new(base: *const u8) -> DtbHeader {
         let wrong_endianness_header: DtbHeader =
             unsafe { ptr::read_volatile(base as *const DtbHeader) };
         DtbHeader {

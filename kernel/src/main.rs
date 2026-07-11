@@ -21,6 +21,7 @@
 
 use crate::{
     cpu_manager::{CPU_STATE_MANAGER, CpuPersistantState, get_cpu_id},
+    dtb::Dtb,
     mem::mmu,
     multiprocessor::mp_init,
     scheduler::{CpuScheduler, PROCESS_MANAGER, process::Process},
@@ -32,7 +33,7 @@ use core::{arch::asm, panic::PanicInfo, sync::atomic::AtomicU64};
 use elf::{ElfBytes, endian::AnyEndian};
 use limine::{
     BaseRevision,
-    request::{RequestsEndMarker, RequestsStartMarker, StackSizeRequest},
+    request::{DeviceTreeBlobRequest, RequestsEndMarker, RequestsStartMarker, StackSizeRequest},
 };
 
 pub(crate) static KERNEL_PHYS_BASE: AtomicU64 = AtomicU64::new(0);
@@ -58,6 +59,9 @@ static BASE_REVISION: BaseRevision = BaseRevision::new();
 #[used]
 #[unsafe(link_section = ".requests")]
 static STACK: StackSizeRequest = StackSizeRequest::new().with_size(0x100000);
+#[used]
+#[unsafe(link_section = ".requests")]
+static DTB: DeviceTreeBlobRequest = DeviceTreeBlobRequest::new();
 
 #[used]
 #[unsafe(link_section = ".requests_start_marker")]
@@ -82,6 +86,10 @@ pub extern "C" fn kernel_init() {
         mmu::init_mmu();
 
         mp_init().expect("multiprocessing failed to initialise");
+
+        let dtb = DTB.get_response().expect("failed to get dtb");
+        let dtb = Dtb::new(dtb.dtb_ptr() as *const u8).expect("failed to parse dtb");
+        println!("{}", dtb);
 
         println!("loading init...");
         let init = include_bytes!("../../build/init.elf");
