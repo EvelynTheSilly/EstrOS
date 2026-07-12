@@ -37,14 +37,8 @@ impl Dtb {
             strings_base = base.add(header.off_dt_strings as usize);
         }
         let memory_reservations = MemoryReservationBlock::new(mem_base);
-        println!("mem res block {:X?}", memory_reservations);
-
         let strings = StringsBlock::new(strings_base, header.size_dt_strings);
-        println!("strings block {:X?}", strings);
-
         let structure = StructureBlock::new(struct_base);
-        println!("strings block {:X?}", structure);
-
         Ok(Dtb {
             header,
             memory_reservations,
