@@ -32,29 +32,40 @@
           components = toolchain.components or [ ];
           targets = toolchain.targets or [ ];
         };
+
+        aarch64-estros-binutils = pkgs.wrapCCWith {
+          cc = cross.buildPackages.gcc;
+          bintools = cross.buildPackages.binutils;
+          extraTools = with cross.buildPackages; [
+            binutils
+            binutils-unwrapped
+            elfutils
+          ];
+        };
       in
       {
+        packages.aarch64-estros-binutils = aarch64-estros-binutils;
+
         devShells.default = pkgs.mkShell {
-          packages = with pkgs; [
-            cargo-expand
+          packages = [
+            pkgs.cargo-expand
             rust
-            bacon
-            pkg-config
-            openssl
-            cross.buildPackages.gcc
-            cross.buildPackages.binutils
+            pkgs.bacon
+            pkgs.pkg-config
+            pkgs.openssl
+            aarch64-estros-binutils
             (if system != "aarch64-darwin" then cross.buildPackages.gdb else null)
-            qemu
-            cmake
-            just
-            just-lsp
-            just-formatter
-            cloc
-            mtools
+            pkgs.qemu
+            pkgs.cmake
+            pkgs.just
+            pkgs.just-lsp
+            pkgs.just-formatter
+            pkgs.cloc
+            pkgs.mtools
             pkgs.pkgsCross.aarch64-multiplatform.OVMF.fd
-            OVMF.fd
-            gptfdisk
-            python313Packages.virt-firmware
+            pkgs.OVMF.fd
+            pkgs.gptfdisk
+            pkgs.python313Packages.virt-firmware
           ];
           LIMINE_EFI_PATH = "${pkgs.limine-full}/share/limine/BOOTAA64.EFI";
           BOOT_FIRMWARE_PATH = "${pkgs.pkgsCross.aarch64-multiplatform.OVMF.fd}/FV";
