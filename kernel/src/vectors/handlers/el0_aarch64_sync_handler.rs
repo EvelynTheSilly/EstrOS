@@ -35,7 +35,10 @@ extern "C" fn el0_aarch64_sync_handler(state: &mut cpu_state::State) {
         let Some(previous_ttbr) = cpu.get_ttbr() else {
             return;
         };
-        scheduler.deactivate_memory_map(pid, previous_ttbr).unwrap();
+        scheduler
+            .get_process_mut(pid)
+            .expect("previous pid should exist")
+            .deactivate_memory_map(previous_ttbr);
     });
     match ec {
         21 => {
@@ -49,7 +52,10 @@ extern "C" fn el0_aarch64_sync_handler(state: &mut cpu_state::State) {
         }
     };
     (&PROCESS_MANAGER, &CPU_STATE_MANAGER).lock(|(scheduler, manager)| {
-        let _ = scheduler.report_thread_state(pid.unwrap(), tid.unwrap(), state.clone());
+        let _ = scheduler
+            .get_process_mut(pid.expect("the cpu should have a previous pid at this point"))
+            .expect("proccess should still exist")
+            .report_thread_state(tid.unwrap(), state.clone());
         let maybe_schedule = scheduler.schedule();
         let (pid, tid, thread) = match maybe_schedule {
             Err(e) => match e {
@@ -67,8 +73,9 @@ extern "C" fn el0_aarch64_sync_handler(state: &mut cpu_state::State) {
             .or_insert(CpuPersistantState::new());
         cpu.submit_pid_tid(pid, tid);
         let previous_ttbr = scheduler
-            .activate_memory_map(pid)
-            .expect("scheduler should have given us a correct pid");
+            .get_process_mut(pid)
+            .expect("scheduler should have given us a correct pid")
+            .activate_memory_map();
         cpu.submit_ttbr(previous_ttbr);
         *state = thread.state;
     });

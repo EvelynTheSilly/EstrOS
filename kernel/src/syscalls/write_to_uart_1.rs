@@ -20,8 +20,11 @@ pub fn write_to_uart(state: &mut State, pid: u64) {
             // SAFETY: ptr is non-null, properly aligned, and the function will fully initialize all len bytes
             dest = core::slice::from_raw_parts_mut(spare.as_mut_ptr() as *mut u8, spare.len());
         };
-        scheduler
-            .process_mem_read(pid, dest, state.x[0] as usize)
+        let Ok(process) = scheduler.get_process(pid) else {
+            return;
+        };
+        process
+            .mem_read(dest, state.x[0] as usize)
             .expect("failed to read process memory TODO: HANDLE THIS");
         unsafe {
             let slen = s.len();

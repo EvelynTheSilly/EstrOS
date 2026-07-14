@@ -113,8 +113,9 @@ extern "C" fn get_init_process(initial_thread_state: *mut State) {
         let (pid, tid, thread) = PROCESS_MANAGER.lock(|scheduler| scheduler.schedule().unwrap());
         let ttbr = PROCESS_MANAGER.lock(|scheduler| {
             scheduler
-                .activate_memory_map(pid)
-                .expect("failed to activate init memory map")
+                .get_process_mut(pid)
+                .expect("failed to get init proccess")
+                .activate_memory_map()
         });
         CPU_STATE_MANAGER.lock(|cpu_manager| {
             let cpu = cpu_manager

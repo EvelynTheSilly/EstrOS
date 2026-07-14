@@ -1,12 +1,10 @@
 use crate::scheduler::CpuSchedulerError;
-use crate::vectors::cpu_state::State;
 use crate::{
     rng::{RNG, Rng},
     scheduler::{CpuScheduler, Result, process::Process, threads::SchedulerThread},
     syncronisation::Mutex,
 };
 use alloc::vec::Vec;
-use core::arch::asm;
 
 struct ProcessMeta {
     pid: u64,
@@ -102,78 +100,17 @@ impl CpuScheduler for RoundRobinScheduler {
         self.processes.remove(index);
         Ok(())
     }
-    fn spawn_thread(&mut self, pid: u64, thread: SchedulerThread) -> Result<u64> {
-        let threads = &mut self
-            .processes
-            .get_mut(pid as usize)
-            .ok_or(CpuSchedulerError::InvalidPid(pid))?
-            .process
-            .threads;
 
-        let tid =
-            RNG.lock(|rng| rng.rand_u64_not_by(|candidate| !threads.contains_key(&candidate)));
-
-        threads.insert(tid, thread);
-        Ok(tid)
+    fn get_process(&self, pid: u64) -> Result<&Process> {
+        let meta = self
+            .get_proc_by_pid(pid)
+            .ok_or(CpuSchedulerError::InvalidPid(pid))?;
+        Ok(&meta.process)
     }
-    fn kill_thread(&mut self, _pid: u64, _tid: u64) -> Result<()> {
-        todo!()
-    }
-    fn report_thread_state(&mut self, pid: u64, tid: u64, state: State) -> Result<()> {
+    fn get_process_mut(&mut self, pid: u64) -> Result<&mut Process> {
         let meta = self
             .get_proc_by_pid_mut(pid)
             .ok_or(CpuSchedulerError::InvalidPid(pid))?;
-        meta.process
-            .threads
-            .get_mut(&tid)
-            .ok_or(CpuSchedulerError::InvalidTid(tid))?
-            .state = state;
-        Ok(())
-    }
-    fn activate_memory_map(&mut self, pid: u64) -> Result<usize> {
-        let index = self
-            .get_index_by_pid(pid)
-            .ok_or(CpuSchedulerError::InvalidPid(pid))?;
-        let meta = self
-            .processes
-            .get(index)
-            .ok_or(CpuSchedulerError::InvalidPid(pid))?;
-        let previous_ttbr;
-        unsafe {
-            previous_ttbr = meta.process.memory_map.activate();
-            asm!("dsb sy", "isb");
-        }
-        Ok(previous_ttbr)
-    }
-    fn deactivate_memory_map(&mut self, pid: u64, previous_ttbr: usize) -> Result<()> {
-        let index = self
-            .get_index_by_pid(pid)
-            .ok_or(CpuSchedulerError::InvalidPid(pid))?;
-        unsafe {
-            self.processes
-                .get_mut(index)
-                .ok_or(CpuSchedulerError::InvalidPid(pid))?
-                .process
-                .memory_map
-                .deactivate(previous_ttbr);
-        }
-        Ok(())
-    }
-
-    fn process_mem_compare(&self, _pid: u64) -> bool {
-        todo!()
-    }
-    fn process_mem_read(&self, pid: u64, dest: &mut [u8], process_pointer: usize) -> Result<()> {
-        let proc = self
-            .get_proc_by_pid(pid)
-            .ok_or(CpuSchedulerError::InvalidPid(pid))?;
-        proc.process
-            .mem_read(dest, process_pointer)
-            .ok()
-            .ok_or(CpuSchedulerError::ProcessMemoryError)?;
-        Ok(())
-    }
-    fn process_mem_write(&mut self, _pid: u64) -> Result<()> {
-        todo!()
+        Ok(&mut meta.process)
     }
 }

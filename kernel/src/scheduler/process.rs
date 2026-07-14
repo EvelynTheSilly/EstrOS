@@ -1,11 +1,12 @@
 use crate::{
     mem::paging::{EstrTranslation, kernel_virtual_to_physical},
     println,
+    rng::{RNG, Rng},
     scheduler::{
-        allocations::{SegmentAllocation, SchedulerPointer, elf_flags_to_mmu_constrains},
+        allocations::{SchedulerPointer, SegmentAllocation, elf_flags_to_mmu_constrains},
         threads::SchedulerThread,
-        CpuSchedulerError,
     },
+    syncronisation::Mutex,
     vectors::cpu_state::State,
 };
 use aarch64_paging::{
@@ -14,10 +15,23 @@ use aarch64_paging::{
     paging::{Constraints, MemoryRegion, PAGE_SIZE},
 };
 use alloc::{alloc::alloc, collections::btree_map::BTreeMap, vec::Vec};
-use anyhow::Result;
-use core::alloc::Layout;
 use core::sync::atomic::Ordering;
+use core::{alloc::Layout, arch::asm};
 use elf::{ElfBytes, abi::PT_LOAD, endian::AnyEndian};
+use thiserror::Error;
+
+#[derive(Error, Debug)]
+pub(crate) enum ProccessError {
+    #[error("Invalid Tid")]
+    InvalidTid,
+    #[error("page table walk failed: {0}")]
+    PageTableWalkError(&'static str),
+    #[error("the range of memory provided was invalid")]
+    MemoryRangeError,
+    #[error("failed to parse elf file correctly: {0}")]
+    ElfParseError(&'static str),
+}
+type Result<T> = core::result::Result<T, ProccessError>;
 
 pub struct Process {
     pub segments: Vec<SegmentAllocation>,
@@ -26,6 +40,39 @@ pub struct Process {
 }
 
 impl Process {
+    pub fn kill_thread(&mut self, tid: u64) -> Result<()> {
+        self.threads
+            .remove(&tid)
+            .map(|_| ())
+            .ok_or(ProccessError::InvalidTid)
+    }
+    pub fn spawn_thread(&mut self, thread: SchedulerThread) -> Result<u64> {
+        let threads = &mut self.threads;
+        let tid =
+            RNG.lock(|rng| rng.rand_u64_not_by(|candidate| !threads.contains_key(&candidate)));
+        threads.insert(tid, thread);
+        Ok(tid)
+    }
+    pub fn report_thread_state(&mut self, tid: u64, state: State) -> Result<()> {
+        self.threads
+            .get_mut(&tid)
+            .ok_or(ProccessError::InvalidTid)?
+            .state = state;
+        Ok(())
+    }
+    pub fn activate_memory_map(&mut self) -> usize {
+        let previous_ttbr;
+        unsafe {
+            previous_ttbr = self.memory_map.activate();
+            asm!("dsb sy", "isb");
+        }
+        previous_ttbr
+    }
+    pub fn deactivate_memory_map(&mut self, previous_ttbr: usize) {
+        unsafe {
+            self.memory_map.deactivate(previous_ttbr);
+        }
+    }
     /// see `CpuScheduler::process_mem_read` except for the part on pid not existing
     pub fn mem_read(&self, dest: &mut [u8], process_pointer: usize) -> Result<()> {
         let len = dest.len();
@@ -35,7 +82,7 @@ impl Process {
 
         let end = process_pointer
             .checked_add(len)
-            .ok_or_else(|| anyhow::anyhow!("pointer + length overflow"))?;
+            .ok_or_else(|| ProccessError::MemoryRangeError)?;
 
         let region = MemoryRegion::new(process_pointer, end);
         let mut bytes_read = 0usize;
@@ -62,7 +109,11 @@ impl Process {
                     let dest_off = read_start - process_pointer;
 
                     unsafe {
-                        core::ptr::copy_nonoverlapping(kaddr, dest.as_mut_ptr().add(dest_off), count);
+                        core::ptr::copy_nonoverlapping(
+                            kaddr,
+                            dest.as_mut_ptr().add(dest_off),
+                            count,
+                        );
                     }
 
                     bytes_read += count;
@@ -70,23 +121,21 @@ impl Process {
 
                 Ok(())
             })
-            .map_err(|e| anyhow::anyhow!("page table walk failed: {:?}", e))?;
+            .map_err(|_| {
+                ProccessError::PageTableWalkError("failed to walk page table on mem read")
+            })?;
 
         if bytes_read != len {
-            anyhow::bail!(
-                "incomplete read: only {}/{} bytes mapped in process address space",
-                bytes_read,
-                len
-            );
+            return Err(ProccessError::MemoryRangeError);
         }
 
         Ok(())
     }
 
-    pub fn from_elf(elf: ElfBytes<AnyEndian>) -> crate::scheduler::Result<Process> {
+    pub fn from_elf(elf: ElfBytes<AnyEndian>) -> Result<Process> {
         let pheaders = elf
             .segments()
-            .ok_or(CpuSchedulerError::ElfParseError)?;
+            .ok_or(ProccessError::ElfParseError("couldnt get elf segments"))?;
         let load_headers = pheaders.iter().filter(|header| header.p_type == PT_LOAD);
         let mut memmap = Mapping::new(
             EstrTranslation,
@@ -96,9 +145,9 @@ impl Process {
             aarch64_paging::paging::VaRange::Lower,
         );
         let mut segments = Vec::new();
-        load_headers.for_each(|header| {
+        for header in load_headers {
             if header.p_memsz == 0 {
-                return;
+                continue;
             }
             let allocation;
             unsafe {
@@ -131,12 +180,18 @@ impl Process {
                     elf_flags_to_mmu_constrains(header.p_flags),
                     Constraints::empty(),
                 )
-                .expect("idk man. TODO probably handle this error idk");
-        });
+                .map_err(|_| ProccessError::ElfParseError("failed to map one of the pages"))?;
+        }
         println!("mapped all headers");
-        let common_data = elf.find_common_data().unwrap();
-        let symtab = common_data.symtab.unwrap();
-        let strtab = common_data.symtab_strs.unwrap();
+        let common_data = elf
+            .find_common_data()
+            .map_err(|_| ProccessError::ElfParseError("elf has no common data"))?;
+        let symtab = common_data
+            .symtab
+            .ok_or(ProccessError::ElfParseError("elf has no common data"))?;
+        let strtab = common_data
+            .symtab_strs
+            .ok_or(ProccessError::ElfParseError("elf has no common data"))?;
         let name = "_start";
         let start_sym = symtab
             .iter()
@@ -144,7 +199,7 @@ impl Process {
                 let sym_name = strtab.get(symbol.st_name as usize).unwrap();
                 sym_name == name
             })
-            .unwrap();
+            .ok_or(ProccessError::ElfParseError("process has no start label"))?;
         let start_address = start_sym.st_value;
         let mut threads = BTreeMap::new();
         threads.insert(
