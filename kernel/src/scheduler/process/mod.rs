@@ -4,6 +4,7 @@ use crate::{
     rng::{RNG, Rng},
     scheduler::{
         allocations::{SchedulerPointer, SegmentAllocation, elf_flags_to_mmu_constrains},
+        process::messages::{Message, Mid},
         threads::SchedulerThread,
     },
     syncronisation::Mutex,
@@ -20,11 +21,14 @@ use elf::{ElfBytes, abi::PT_LOAD, endian::AnyEndian};
 use thiserror::Error;
 
 mod mem;
+mod messages;
 
 #[derive(Error, Debug)]
 pub(crate) enum ProccessError {
     #[error("Invalid Tid")]
     InvalidTid,
+    #[error("Invalid Mid")]
+    InvalidMid,
     #[error("page table walk failed: {0}")]
     PageTableWalkError(&'static str),
     #[error("the range of memory provided was invalid")]

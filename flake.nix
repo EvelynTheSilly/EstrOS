@@ -7,18 +7,16 @@
     rust-overlay.url = "github:oxalica/rust-overlay";
   };
 
-  outputs =
-    {
-      self,
-      nixpkgs,
-      flake-utils,
-      rust-overlay,
-    }:
+  outputs = {
+    self,
+    nixpkgs,
+    flake-utils,
+    rust-overlay,
+  }:
     flake-utils.lib.eachDefaultSystem (
-      system:
-      let
+      system: let
         cross = pkgs.pkgsCross.aarch64-embedded;
-        overlays = [ rust-overlay.overlays.default ];
+        overlays = [rust-overlay.overlays.default];
         pkgs = import nixpkgs {
           inherit system overlays;
           config.allowUnsupportedSystem = true;
@@ -29,8 +27,8 @@
 
         rust = pkgs.rust-bin.fromRustupToolchain {
           channel = toolchain.channel;
-          components = toolchain.components or [ ];
-          targets = toolchain.targets or [ ];
+          components = toolchain.components or [];
+          targets = toolchain.targets or [];
         };
 
         aarch64-estros-binutils = pkgs.wrapCCWith {
@@ -42,33 +40,39 @@
             elfutils
           ];
         };
-      in
-      {
+      in {
         packages.aarch64-estros-binutils = aarch64-estros-binutils;
 
         devShells.default = pkgs.mkShell {
-          packages = [
-            pkgs.cargo-expand
-            rust
-            pkgs.bacon
-            pkgs.pkg-config
-            pkgs.openssl
-            aarch64-estros-binutils
-            (if system != "aarch64-darwin" then cross.buildPackages.gdb else null)
-            pkgs.qemu
-            pkgs.cmake
-            pkgs.just
-            pkgs.just-lsp
-            pkgs.just-formatter
-            pkgs.cloc
-            pkgs.mtools
-            pkgs.pkgsCross.aarch64-multiplatform.OVMF.fd
-            pkgs.OVMF.fd
-            pkgs.gptfdisk
-            pkgs.python313Packages.virt-firmware
-          ];
-          LIMINE_EFI_PATH = "${pkgs.limine-full}/share/limine/BOOTAA64.EFI";
-          BOOT_FIRMWARE_PATH = "${pkgs.pkgsCross.aarch64-multiplatform.OVMF.fd}/FV";
+          packages =
+            [
+              pkgs.cargo-expand
+              rust
+              pkgs.bacon
+              pkgs.pkg-config
+              pkgs.openssl
+              pkgs.qemu
+              pkgs.cmake
+              pkgs.just
+              pkgs.just-lsp
+              pkgs.just-formatter
+              pkgs.cloc
+            ]
+            ++ (
+              if system != "aarch64-darwin"
+              then [
+                aarch64-estros-binutils
+                cross.buildPackages.gdb
+                pkgs.mtools
+                pkgs.pkgsCross.aarch64-multiplatform.OVMF.fd
+                pkgs.OVMF.fd
+                pkgs.gptfdisk
+                pkgs.python313Packages.virt-firmware
+              ]
+              else []
+            );
+          LIMINE_EFI_PATH = (if system != "aarch64-darwin" then "${pkgs.limine-full}/share/limine/BOOTAA64.EFI" else "");
+          BOOT_FIRMWARE_PATH = (if system != "aarch64-darwin" then "${pkgs.pkgsCross.aarch64-multiplatform.OVMF.fd}/FV" else "");
           CARGO_UNSTABLE_JSON_TARGET_SPEC = "true";
           shellHook = ''
             if [[ $- == *i* ]]; then
