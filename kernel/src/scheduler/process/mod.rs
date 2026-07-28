@@ -4,7 +4,7 @@ use crate::{
     rng::{RNG, Rng},
     scheduler::{
         allocations::{SchedulerPointer, SegmentAllocation, elf_flags_to_mmu_constrains},
-        process::messages::{Message, Mid},
+        process::messages::MessageStore,
         threads::SchedulerThread,
     },
     syncronisation::Mutex,
@@ -39,6 +39,7 @@ pub(crate) enum ProccessError {
 type Result<T> = core::result::Result<T, ProccessError>;
 
 pub struct Process {
+    pub message_store: MessageStore,
     pub segments: Vec<SegmentAllocation>,
     pub memory_map: Mapping<EstrTranslation>,
     pub threads: BTreeMap<u64, SchedulerThread>,

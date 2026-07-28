@@ -1,7 +1,5 @@
 use alloc::{collections::BTreeMap, vec::Vec};
 
-use crate::scheduler::process::Process;
-
 pub type Mid = u64;
 
 #[derive(Default)]
@@ -21,5 +19,3 @@ impl MessageStore {
         self.next_mid += 1;
     }
 }
-
-impl Process {}
