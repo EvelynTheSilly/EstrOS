@@ -88,8 +88,7 @@ pub extern "C" fn kernel_init() {
         mp_init().expect("multiprocessing failed to initialise");
 
         let dtb = DTB.get_response().expect("failed to get dtb");
-        let dtb = Dtb::new(dtb.dtb_ptr() as *const u8).expect("failed to parse dtb");
-        println!("{}", dtb);
+        let _dtb = Dtb::new(dtb.dtb_ptr() as *const u8).expect("failed to parse dtb");
 
         println!("loading init...");
         let init = include_bytes!("../../build/init.elf");
