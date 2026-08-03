@@ -1,7 +1,4 @@
-use crate::{
-    println,
-    scheduler::process::{ProccessError, Process, Result},
-};
+use crate::scheduler::process::{ProccessError, Process, Result};
 use aarch64_paging::paging::MemoryRegion;
 use alloc::vec::Vec;
 use core::sync::atomic::Ordering;
