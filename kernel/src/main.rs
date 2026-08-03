@@ -98,12 +98,6 @@ pub extern "C" fn kernel_init() {
             .lock(|manager| manager.launch_process(init_process))
             .expect("failed to launch init");
         println!("launched pid {}", init_pid);
-        let init_elf = ElfBytes::<AnyEndian>::minimal_parse(init).expect("INVALID INIT FILE");
-        let init_process = Process::from_elf(init_elf).expect("failed to map init process");
-        let init_pid = PROCESS_MANAGER
-            .lock(|manager| manager.launch_process(init_process))
-            .expect("failed to launch init");
-        println!("launched pid {}", init_pid);
     };
 }
 
