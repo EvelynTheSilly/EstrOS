@@ -1,5 +1,9 @@
-use crate::scheduler::process::{ProccessError, Process, Result};
+use crate::{
+    println,
+    scheduler::process::{ProccessError, Process, Result},
+};
 use aarch64_paging::paging::MemoryRegion;
+use alloc::vec::Vec;
 use core::sync::atomic::Ordering;
 
 impl Process {
@@ -51,7 +55,7 @@ impl Process {
         Ok(bytes_processed)
     }
 
-    pub fn mem_read(&self, dest: &mut [u8], process_pointer: usize) -> Result<()> {
+    pub fn mem_read(&self, dest: &mut Vec<u8>, process_pointer: usize) -> Result<()> {
         let len = dest.len();
         let read = self.walk_process_memory(process_pointer, len, |kaddr, count, off| unsafe {
             core::ptr::copy_nonoverlapping(kaddr, dest.as_mut_ptr().add(off), count);
@@ -63,7 +67,7 @@ impl Process {
         }
     }
 
-    pub fn mem_write(&self, process_pointer: usize, src: &[u8]) -> Result<()> {
+    pub fn mem_write(&self, process_pointer: usize, src: Vec<u8>) -> Result<()> {
         let len = src.len();
         let written =
             self.walk_process_memory(process_pointer, len, |kaddr, count, off| unsafe {
@@ -76,10 +80,10 @@ impl Process {
         }
     }
 
-    pub fn mem_compare(&self, process_pointer: usize, src: &[u8]) -> Result<bool> {
+    pub fn mem_compare(&self, process_pointer: usize, src: Vec<u8>) -> Result<bool> {
         let mut matches = true;
         self.walk_process_memory(process_pointer, src.len(), |kaddr, count, off| unsafe {
-            if core::slice::from_raw_parts(kaddr, count) != &src[off..off + count] {
+            if core::slice::from_raw_parts(kaddr, count) != &src.as_slice()[off..off + count] {
                 matches = false;
             }
         })?;
