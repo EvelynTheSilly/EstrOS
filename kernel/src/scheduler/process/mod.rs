@@ -27,8 +27,6 @@ mod messages;
 pub(crate) enum ProccessError {
     #[error("Invalid Tid")]
     InvalidTid,
-    #[error("Invalid Mid")]
-    InvalidMid,
     #[error("page table walk failed: {0}")]
     PageTableWalkError(&'static str),
     #[error("the range of memory provided was invalid")]
@@ -160,6 +158,7 @@ impl Process {
         );
 
         Ok(Process {
+            message_store: MessageStore::new(),
             segments,
             memory_map: memmap,
             threads,
