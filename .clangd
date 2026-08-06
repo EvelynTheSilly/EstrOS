@@ -1,0 +1,14 @@
+CompileFlags:
+  Compiler: aarch64-estros-gcc
+  Add:
+    - "--target=aarch64-none-elf"
+    - "-march=armv8-a"
+    - "-ffreestanding"
+    - "-nostdlib"
+    - "-fno-builtin"
+    - "-isystem=lib/c/sysroot/include"
+  Remove:
+    - "-static"
+    - "-T*"
+    - "-B*"
+    - "-Wl,*"
