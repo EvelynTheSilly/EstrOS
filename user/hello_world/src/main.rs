@@ -1,7 +1,10 @@
 #![no_std]
 #![no_main]
 
-use core::{arch::naked_asm, panic::PanicInfo};
+use core::{
+    arch::{asm, naked_asm},
+    panic::PanicInfo,
+};
 use estrogen::{println, syscall};
 
 #[unsafe(no_mangle)]
@@ -29,7 +32,10 @@ fn main() {
     let line2 = "this is userspace code";
     let line3 = "it can print to the console";
     let line4 = "im gonna exit now o/";
+    let buf = [0; 64];
 
+    syscall!(3, 0, buf.as_ptr(), buf.len());
+    syscall!(1, buf.as_ptr(), buf.len());
     syscall!(1, line1.as_ptr(), line1.len());
     syscall!(1, line2.as_ptr(), line2.len());
     syscall!(1, line3.as_ptr(), line3.len());
