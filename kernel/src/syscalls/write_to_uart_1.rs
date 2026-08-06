@@ -1,6 +1,5 @@
-use core::mem::MaybeUninit;
-
 use alloc::string::String;
+use alloc::vec;
 
 use crate::{
     println,
@@ -11,25 +10,14 @@ use crate::{
 
 pub fn write_to_uart(state: &mut State, pid: u64) {
     PROCESS_MANAGER.lock(|scheduler| {
-        let mut s;
-        let dest: &mut [u8];
-        unsafe {
-            s = String::with_capacity(state.x[1] as usize);
-            let spare: &mut [MaybeUninit<u8>] = s.as_mut_vec().spare_capacity_mut();
-
-            // SAFETY: ptr is non-null, properly aligned, and the function will fully initialize all len bytes
-            dest = core::slice::from_raw_parts_mut(spare.as_mut_ptr() as *mut u8, spare.len());
-        };
         let Ok(process) = scheduler.get_process(pid) else {
             return;
         };
+        let mut buffer = vec![0u8; state.x[1] as usize];
         process
-            .mem_read(dest, state.x[0] as usize)
+            .mem_read(&mut buffer, state.x[0] as usize)
             .expect("failed to read process memory TODO: HANDLE THIS");
-        unsafe {
-            let slen = s.len();
-            s.as_mut_vec().set_len(slen + dest.len());
-        }
+        let s = String::from_utf8_lossy(&buffer.as_slice());
         println!("{}", s);
     })
 }
