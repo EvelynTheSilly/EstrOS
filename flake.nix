@@ -17,12 +17,14 @@
     flake-utils.lib.eachDefaultSystem (
       system:
       let
+
         cross = pkgs.pkgsCross.aarch64-embedded;
         overlays = [ rust-overlay.overlays.default ];
         pkgs = import nixpkgs {
           inherit system overlays;
           config.allowUnsupportedSystem = true;
         };
+        cc = ((import ./lib/c/default.nix) pkgs);
         toolchainToml = fromTOML (builtins.readFile ./rust-toolchain.toml);
 
         toolchain = toolchainToml.toolchain;
@@ -33,44 +35,11 @@
           targets = toolchain.targets or [ ];
         };
 
-        sysroot = ./lib/c/sysroot;
-
-        estros-gcc = cross.buildPackages.wrapCCWith {
-          cc = cross.buildPackages.gcc.cc;
-          bintools = cross.buildPackages.binutils;
-          extraTools = with cross.buildPackages; [
-            binutils
-            binutils-unwrapped
-            elfutils
-          ];
-          extraBuildCommands = ''
-            echo "-isystem ${sysroot}/include" >> $out/nix-support/cc-cflags
-            echo "-L ${sysroot}/lib" >> $out/nix-support/cc-ldflags
-            cat > $out/nix-support/estros.specs <<EOF
-*startfile:
-%{!shared: ${sysroot}/lib/crt0.o}
-*lib:
-%{!shared: -lestros}
-EOF
-            echo "-static -specs=$out/nix-support/estros.specs" >> $out/nix-support/cc-cflags
-          '';
-        };
-
-        aarch64-estros-binutils = pkgs.runCommandLocal "aarch64-estros-binutils" {
-          wrapped = estros-gcc;
-        } ''
-          mkdir -p $out/bin $out/nix-support
-          for src in $wrapped/bin/*; do
-            name=$(basename "$src")
-            ln -s "$src" "$out/bin/''${name/aarch64-none-elf-/aarch64-estros-}"
-          done
-          cat > $out/nix-support/setup-hook <<EOF
-          addToSearchPath _PATH $out/bin
-          EOF
-        '';
       in
       {
-        packages.aarch64-estros-binutils = aarch64-estros-binutils;
+        packages.aarch64-estros-binutils = cc.packages.aarch64-estros-binutils;
+        packages.estros-libc = cc.packages.estros-libc;
+        packages.estros-gcc = cc.packages.estros-gcc;
 
         devShells.default = pkgs.mkShell {
           packages = [
@@ -90,7 +59,7 @@ EOF
             if system != "aarch64-darwin" then
               [
                 cross.buildPackages.gcc
-                aarch64-estros-binutils
+                cc.packages.aarch64-estros-binutils
                 cross.buildPackages.gdb
                 pkgs.mtools
                 pkgs.pkgsCross.aarch64-multiplatform.OVMF.fd
