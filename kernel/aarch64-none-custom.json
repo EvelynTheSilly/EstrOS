@@ -1,0 +1,24 @@
+{
+  "llvm-target": "aarch64-unknown-none",
+  "target-endian": "little",
+  "target-pointer-width": 64,
+  "arch": "aarch64",
+  "os": "none",
+  "env": "",
+  "vendor": "unknown",
+  "linker-flavor": "gcc",
+  "linker": "aarch64-none-elf-gcc",
+  "crt-static-respected": true,
+  "executables": true,
+  "dynamic-linking": false,
+  "relocation-model": "static",
+  "disable-redzone": true,
+  "features": "+strict-align,+v8a",
+  "pre-link-args": {
+    "gcc": [
+      "-nostartfiles",
+      "-ffreestanding"
+    ]
+  },
+  "data-layout": "e-m:e-p270:32:32-p271:32:32-p272:64:64-i8:8:32-i16:16:32-i64:64-i128:128-n32:64-S128-Fn32"
+}

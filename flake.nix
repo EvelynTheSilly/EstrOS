@@ -38,7 +38,6 @@
           pkgs = pkgs;
           cross = cross;
           rust = rust;
-          rust_target = ./aarch64-none-custom.json;
           cc = cc.packages.aarch64-estros-binutils;
           opt = {
             level = "debug";

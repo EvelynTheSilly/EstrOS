@@ -1,4 +1,4 @@
 fn main() {
-    println!("cargo:rustc-link-arg=-Tkernel/linker.ld");
+    println!("cargo:rustc-link-arg=-Tlinker.ld");
     println!("cargo::rerun-if-changed=build.rs");
 }

@@ -1,0 +1,10 @@
+[build]
+target = "aarch64-none-custom.json"
+
+[target.aarch64-none-custom]
+rustflags = [
+    "-C", "link-arg=-nostartfiles",
+]
+
+[unstable]
+build-std = ["core", "compiler_builtins", "alloc"]
