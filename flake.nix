@@ -34,17 +34,23 @@
           components = toolchain.components or [ ];
           targets = toolchain.targets or [ ];
         };
-        init_build_packages = {
+        build_environment = {
           pkgs = pkgs;
           cross = cross;
           rust = rust;
+          rust_target = ./aarch64-none-custom.json;
           cc = cc.packages.aarch64-estros-binutils;
+          opt = {
+            level = "debug";
+          };
         };
         init_build = import user/c_hello_world/default.nix;
-        init = init_build init_build_packages;
+        init = init_build build_environment;
+        kernel_elf = (import ./kernel/default.nix) build_environment;
       in
       {
         packages.init = init;
+        packages.kernel_elf = kernel_elf;
         packages.aarch64-estros-binutils = cc.packages.aarch64-estros-binutils;
         packages.estros-libc = cc.packages.estros-libc;
         packages.estros-gcc = cc.packages.estros-gcc;
