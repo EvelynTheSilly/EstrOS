@@ -1,4 +1,4 @@
-target/
-build/
-config.sh
-bin/
+/target/
+/build/
+/config.sh
+/bin/

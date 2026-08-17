@@ -45,7 +45,13 @@
         };
         init_build = import user/c_hello_world/default.nix;
         init = init_build build_environment;
-        kernel_elf = (import ./kernel/default.nix) build_environment;
+        kernel_elf =
+          (import ./kernel/default.nix) (
+            build_environment
+            // {
+              inherit init;
+            }
+          );
       in
       {
         packages.init = init;
