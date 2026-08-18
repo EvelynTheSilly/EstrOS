@@ -1,40 +1,24 @@
 { inputs, lib, ... }:
+let
+  kernelSrc = ../../kernel;
+in
 {
   imports = [ inputs.flake-parts.flakeModules.nixpkgs ];
 
-  options.estros = {
-    init = lib.mkOption {
-      type = lib.types.package;
-      description = "The cross-compiled init ELF to embed in the kernel";
-    };
-    system = lib.mkOption {
-      type = lib.types.str;
-      default = builtins.currentSystem;
-      description = "The host system for the build toolchain";
-    };
-  };
-
   perSystem =
-    { system, ... }:
     {
-      estros.system = system;
-    };
-
-  flake =
-    { config, ... }:
+      inputs',
+      self',
+      pkgs,
+      ...
+    }:
     let
-      estros-lib = import ../lib/nix/_helpers {
+      estros-lib = import ./_helpers.nix {
         nixpkgs = inputs.nixpkgs;
         rust-overlay = inputs.rust-overlay;
       };
 
-      pkgs = import inputs.nixpkgs {
-        system = config.estros.system;
-        overlays = [ inputs.rust-overlay.overlays.default ];
-        config.allowUnsupportedSystem = true;
-      };
-
-      rust = estros-lib.makeRustToolchain pkgs;
+      rust = self'.packages.rust;
       cross = pkgs.pkgsCross.aarch64-embedded;
 
       rustPlatform = pkgs.makeRustPlatform {
@@ -43,7 +27,7 @@
       };
 
       sysrootLock = "${rust}/lib/rustlib/src/rust/library/Cargo.lock";
-      kernelDeps = rustPlatform.importCargoLock { lockFile = ./Cargo.lock; };
+      kernelDeps = rustPlatform.importCargoLock { lockFile = "${kernelSrc}/Cargo.lock"; };
       sysrootDeps = rustPlatform.importCargoLock { lockFile = sysrootLock; };
       combinedDeps = pkgs.runCommand "cargo-vendor-dir" { } ''
         mkdir -p $out
@@ -55,7 +39,7 @@
     {
       packages.kernel_elf = rustPlatform.buildRustPackage {
         name = "estros_kernel";
-        src = ./.;
+        src = kernelSrc;
 
         cargoDeps = combinedDeps;
 
@@ -63,7 +47,7 @@
         doCheck = false;
         auditable = false;
 
-        env.INIT_ELF_PATH = "${config.estros.init}/init.elf";
+        env.INIT_ELF_PATH = "${self'.packages.init}/init.elf";
 
         nativeBuildInputs = [
           cross.buildPackages.gcc
