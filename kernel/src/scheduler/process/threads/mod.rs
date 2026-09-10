@@ -1,6 +1,8 @@
-use crate::vectors::cpu_state::State;
+use crate::{scheduler::process::threads::wait_conditions::WaitState, vectors::cpu_state::State};
 use alloc::collections::BTreeMap;
 use thiserror::Error;
+
+mod wait_conditions;
 
 #[derive(Error, Debug)]
 pub(crate) enum ThreadError {
@@ -18,8 +20,10 @@ pub struct ThreadStore {
 
 #[derive(Clone, Default)]
 pub struct SchedulerThread {
+    pub wait_state: WaitState,
     pub state: State,
 }
+
 impl SchedulerThread {
     pub fn at(location: u64) -> Self {
         SchedulerThread {
@@ -27,6 +31,7 @@ impl SchedulerThread {
                 elr: location,
                 ..State::default()
             },
+            ..Default::default()
         }
     }
 }

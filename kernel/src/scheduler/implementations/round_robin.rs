@@ -83,6 +83,7 @@ impl CpuScheduler for RoundRobinScheduler {
             .process
             .threads
             .iter()
+            .filter(|pair| pair.1.wait_state.is_none())
             .nth(tid)
             .expect("i should probably handle the process not having any threads");
         Ok((procmeta.pid.clone(), tid.clone(), thread.clone()))
