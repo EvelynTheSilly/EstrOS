@@ -2,7 +2,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <syscalls.h>
-#include <thread.h>
+#include <pthread.h>
 #include <stddef.h>
 
 void* poopoopeepee(void* arg) {
@@ -17,14 +17,15 @@ int main(){
     puts("hello from threadding");
     puts("the goal is to make a second thread, exit the main thread, then exit the process from the second thread");
 
-    spawn_thread(*poopoopeepee, NULL, 4096);
-    spawn_thread(*poopoopeepee, NULL, 4096);
-    spawn_thread(*poopoopeepee, NULL, 4096);
-    spawn_thread(*poopoopeepee, NULL, 4096);
-    spawn_thread(*poopoopeepee, NULL, 4096);
-    spawn_thread(*poopoopeepee, NULL, 4096);
-    spawn_thread(*poopoopeepee, NULL, 4096);
-    spawn_thread(*poopoopeepee, NULL, 4096);
-    
-    thread_exit();
+    pthread_t t;
+    pthread_create(&t, poopoopeepee, 4096);
+    pthread_create(&t, poopoopeepee, 4096);
+    pthread_create(&t, poopoopeepee, 4096);
+    pthread_create(&t, poopoopeepee, 4096);
+    pthread_create(&t, poopoopeepee, 4096);
+    pthread_create(&t, poopoopeepee, 4096);
+    pthread_create(&t, poopoopeepee, 4096);
+    pthread_create(&t, poopoopeepee, 4096);
+
+    pthread_exit();
 }

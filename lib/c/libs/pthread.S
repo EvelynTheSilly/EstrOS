@@ -10,5 +10,5 @@ asm_spawn_thread:
     mov x1, xzr
     mov x2, xzr
     blr x3
-    bl thread_exit
+    bl pthread_exit
     b .
