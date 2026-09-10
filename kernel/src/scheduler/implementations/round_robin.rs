@@ -1,4 +1,3 @@
-use crate::println;
 use crate::scheduler::CpuSchedulerError;
 use crate::scheduler::{CpuScheduler, Result, process::Process, process::threads::SchedulerThread};
 use alloc::vec::Vec;
