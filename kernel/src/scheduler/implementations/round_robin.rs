@@ -1,3 +1,4 @@
+use crate::println;
 use crate::scheduler::CpuSchedulerError;
 use crate::scheduler::{CpuScheduler, Result, process::Process, process::threads::SchedulerThread};
 use alloc::vec::Vec;
@@ -84,6 +85,7 @@ impl CpuScheduler for RoundRobinScheduler {
             .threads
             .iter()
             .filter(|pair| pair.1.wait_state.is_none())
+            .cycle()
             .nth(tid)
             .expect("i should probably handle the process not having any threads");
         Ok((procmeta.pid.clone(), tid.clone(), thread.clone()))

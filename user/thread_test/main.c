@@ -10,7 +10,7 @@ void* poopoopeepee(void* arg) {
     for (int i = 0; i < 100; i++) {
         sys_noop();
     };
-    sys_exit();
+    pthread_exit();
 }
 
 int main(){
@@ -19,13 +19,8 @@ int main(){
 
     pthread_t t;
     pthread_create(&t, poopoopeepee, 4096);
-    pthread_create(&t, poopoopeepee, 4096);
-    pthread_create(&t, poopoopeepee, 4096);
-    pthread_create(&t, poopoopeepee, 4096);
-    pthread_create(&t, poopoopeepee, 4096);
-    pthread_create(&t, poopoopeepee, 4096);
-    pthread_create(&t, poopoopeepee, 4096);
-    pthread_create(&t, poopoopeepee, 4096);
+    
+    pthread_join(&t);
 
-    pthread_exit();
+    puts("thread finished yayyy");
 }

@@ -1,8 +1,11 @@
-use crate::{scheduler::process::threads::wait_conditions::WaitState, vectors::cpu_state::State};
+use crate::{
+    scheduler::process::threads::wait_conditions::{WaitState, WaitStateUpdate},
+    vectors::cpu_state::State,
+};
 use alloc::collections::BTreeMap;
 use thiserror::Error;
 
-mod wait_conditions;
+pub mod wait_conditions;
 
 #[derive(Error, Debug)]
 pub(crate) enum ThreadError {
@@ -37,6 +40,11 @@ impl SchedulerThread {
 }
 
 impl ThreadStore {
+    pub fn notify_all_waiting_threads(&mut self, update: &WaitStateUpdate) {
+        for thread in &mut self.threads {
+            thread.1.wait_state.update(update);
+        }
+    }
     pub fn new() -> Self {
         ThreadStore {
             running_tid: 0,
@@ -60,6 +68,7 @@ impl ThreadStore {
         self.threads.get_mut(&tid).ok_or(ThreadError::InvalidTid)
     }
     pub fn remove(&mut self, tid: Tid) -> Result<()> {
+        self.notify_all_waiting_threads(&WaitStateUpdate::ThreadFinished(tid));
         self.threads
             .remove(&tid)
             .map(|_| ())

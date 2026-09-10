@@ -32,7 +32,7 @@ int pthread_create(pthread_t *t, typeof(void *(void *_Nullable)) *start_routine,
     return 0;
 }
 
-// TODO
 int pthread_join(pthread_t *t) {
+    sys_wait_on_thread(t->tid);
     return 0;
 }

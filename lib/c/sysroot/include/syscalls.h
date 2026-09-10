@@ -12,6 +12,7 @@
  *   5: get_pid() -> pid
  *   6: spawn_thread(x0=location, x1=arg) -> tid
  *   7: kill_thread(x0=tid) -> 0
+ *   8: wait_on_thread(x0=tid) -> 0
  * See kernel/src/syscalls/mod.rs for the authoritative list.
  */
 
@@ -29,5 +30,6 @@ uint64_t sys_get_tid(void);
 uint64_t sys_get_pid(void);
 uint64_t sys_spawn_thread(const void *location, void *arg);
 uint64_t sys_kill_thread(uint64_t tid);
+uint64_t sys_wait_on_thread(uint64_t tid);
 
 #endif /* SYSCALLS_H */

@@ -1,7 +1,7 @@
 use crate::{
     syscalls::{
         exit::exit, kill_thread::kill_thread, read_message::read_message,
-        spawn_thread::spawn_thread, write_to_uart::write_to_uart,
+        spawn_thread::spawn_thread, wait_on_thread::wait_on_thread, write_to_uart::write_to_uart,
     },
     vectors::cpu_state::State,
 };
@@ -10,6 +10,7 @@ mod exit;
 mod kill_thread;
 mod read_message;
 mod spawn_thread;
+mod wait_on_thread;
 mod write_to_uart;
 
 const SYSCALLS: &[fn(&mut State, u64, u64) -> SyscallResult] = &[
@@ -21,6 +22,7 @@ const SYSCALLS: &[fn(&mut State, u64, u64) -> SyscallResult] = &[
     |_, _, tid| Some(Ok(tid)), // get_tid
     spawn_thread,
     kill_thread,
+    wait_on_thread,
 ];
 
 pub fn handle_syscall(state: &mut State, iss: u64, pid: u64, tid: u64) {

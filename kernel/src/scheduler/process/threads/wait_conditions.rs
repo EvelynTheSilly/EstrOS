@@ -1,10 +1,14 @@
 use crate::scheduler::process::threads::Tid;
 
-#[derive(Default, Clone)]
+#[derive(Default, Clone, Debug)]
 pub enum WaitState {
     #[default]
     None,
     TidWait(Tid),
+}
+
+pub enum WaitStateUpdate {
+    ThreadFinished(Tid),
 }
 
 impl WaitState {
@@ -12,6 +16,17 @@ impl WaitState {
         match self {
             WaitState::None => true,
             _ => false,
+        }
+    }
+    pub fn update(&mut self, update: &WaitStateUpdate) {
+        match update {
+            WaitStateUpdate::ThreadFinished(update_tid) => {
+                if let WaitState::TidWait(tid) = self {
+                    if update_tid == tid {
+                        *self = WaitState::None;
+                    }
+                }
+            }
         }
     }
 }
