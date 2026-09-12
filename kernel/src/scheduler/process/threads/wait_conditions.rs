@@ -18,15 +18,17 @@ impl WaitState {
             _ => false,
         }
     }
-    pub fn update(&mut self, update: &WaitStateUpdate) {
+    pub fn update(&mut self, update: &WaitStateUpdate) -> bool {
         match update {
             WaitStateUpdate::ThreadFinished(update_tid) => {
                 if let WaitState::TidWait(tid) = self {
                     if update_tid == tid {
                         *self = WaitState::None;
+                        return true;
                     }
                 }
             }
         }
+        return false;
     }
 }

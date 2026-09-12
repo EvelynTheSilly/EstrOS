@@ -2,7 +2,7 @@ use crate::{
     scheduler::process::threads::wait_conditions::{WaitState, WaitStateUpdate},
     vectors::cpu_state::State,
 };
-use alloc::collections::BTreeMap;
+use alloc::{collections::BTreeMap, vec::Vec};
 use thiserror::Error;
 
 pub mod wait_conditions;
@@ -40,10 +40,13 @@ impl SchedulerThread {
 }
 
 impl ThreadStore {
-    pub fn notify_all_waiting_threads(&mut self, update: &WaitStateUpdate) {
-        for thread in &mut self.threads {
-            thread.1.wait_state.update(update);
+    pub fn notify_all_waiting_threads(&mut self, update: &WaitStateUpdate) -> Vec<u64> {
+        let mut vec = Vec::new();
+        for pair in &mut self.threads {
+            pair.1.wait_state.update(update);
+            vec.push(*pair.0);
         }
+        vec
     }
     pub fn new() -> Self {
         ThreadStore {
@@ -68,7 +71,6 @@ impl ThreadStore {
         self.threads.get_mut(&tid).ok_or(ThreadError::InvalidTid)
     }
     pub fn remove(&mut self, tid: Tid) -> Result<()> {
-        self.notify_all_waiting_threads(&WaitStateUpdate::ThreadFinished(tid));
         self.threads
             .remove(&tid)
             .map(|_| ())

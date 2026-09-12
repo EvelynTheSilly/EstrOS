@@ -7,10 +7,7 @@
 
 void* poopoopeepee(void* arg) {
     puts("wee woo yayyyyy");
-    for (int i = 0; i < 100; i++) {
-        sys_noop();
-    };
-    pthread_exit();
+    return (void*)6;
 }
 
 int main(){
@@ -20,7 +17,11 @@ int main(){
     pthread_t t;
     pthread_create(&t, poopoopeepee, 4096);
     
-    pthread_join(&t);
-
-    puts("thread finished yayyy");
+    for (int i = 0; i < 100; i++) {
+        sys_noop();
+    }
+    
+    uint64_t code = (uint64_t)pthread_join(&t);
+    puts("returned code");
+    putc(code + '0');
 }
