@@ -40,9 +40,7 @@ pub(crate) static KERNEL_PHYS_BASE: AtomicU64 = AtomicU64::new(0);
 
 mod boot;
 mod cpu_manager;
-mod drivers;
 mod dtb;
-mod irqs;
 mod mem;
 mod multiprocessor;
 mod rng;
