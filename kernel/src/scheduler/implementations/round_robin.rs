@@ -94,8 +94,10 @@ impl CpuScheduler for RoundRobinScheduler {
                 let thread = meta
                     .process
                     .threads
-                    .get(robin as u64)
-                    .expect("robin should be in TID bounds");
+                    .iter()
+                    .nth(robin)
+                    .expect("robin should be in TID bounds")
+                    .1;
                 if thread.wait_state.is_none() {
                     return Ok(SchedulingResult::Thread {
                         pid: meta.pid,
