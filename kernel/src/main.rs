@@ -25,7 +25,7 @@ use crate::{
     dtb::Dtb,
     mem::mmu,
     multiprocessor::mp_init,
-    scheduler::{CpuScheduler, PROCESS_MANAGER, init::launch_init},
+    scheduler::{CpuScheduler, PROCESS_MANAGER, SchedulingResult, init::launch_init},
     syncronisation::Mutex,
     vectors::cpu_state::State,
 };
@@ -95,7 +95,11 @@ pub extern "C" fn kernel_init() {
 
 extern "C" fn get_init_process(initial_thread_state: *mut State) {
     unsafe {
-        let (pid, tid, thread) = PROCESS_MANAGER.lock(|scheduler| scheduler.schedule().unwrap());
+        let scheduling_ok = PROCESS_MANAGER.lock(|scheduler| scheduler.schedule().unwrap());
+        let (pid, tid, thread) = match scheduling_ok {
+            SchedulingResult::Wait => panic!("got wait for the first scheduling result"),
+            SchedulingResult::Thread { pid, tid, thread } => (pid, tid, thread),
+        };
         let ttbr = PROCESS_MANAGER.lock(|scheduler| {
             scheduler
                 .get_process_mut(pid)

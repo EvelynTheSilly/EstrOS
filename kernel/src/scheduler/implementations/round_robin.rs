@@ -1,5 +1,5 @@
-use crate::scheduler::CpuSchedulerError;
-use crate::scheduler::{CpuScheduler, Result, process::Process, process::threads::SchedulerThread};
+use crate::scheduler::{CpuScheduler, Result, process::Process};
+use crate::scheduler::{CpuSchedulerError, SchedulingResult};
 use alloc::vec::Vec;
 
 struct ProcessMeta {
@@ -25,11 +25,15 @@ const impl Default for RoundRobinScheduler {
 }
 
 impl ProcessMeta {
-    fn get_next_robin(&mut self) -> usize {
+    fn get_next_robin(&mut self) -> Option<usize> {
         let mut robin = self.tid_robin + 1;
-        robin = robin % self.process.threads.len();
+        robin = if self.process.threads.len() != 0 {
+            robin % self.process.threads.len()
+        } else {
+            return None;
+        };
         self.tid_robin = robin;
-        robin
+        Some(robin)
     }
 }
 
@@ -69,25 +73,46 @@ impl RoundRobinScheduler {
         self.processes.iter_mut().find(|meta| meta.pid == pid)
     }
 }
+
 impl CpuScheduler for RoundRobinScheduler {
-    fn schedule(&mut self) -> Result<(u64, u64, SchedulerThread)> {
-        let index = self
-            .get_next_robin()
-            .ok_or(CpuSchedulerError::NoProcesses)?;
-        let procmeta = self
-            .processes
-            .get_mut(index)
-            .ok_or(CpuSchedulerError::NoProcesses)?;
-        let tid = procmeta.get_next_robin();
-        let (tid, thread) = procmeta
-            .process
-            .threads
-            .iter()
-            .filter(|pair| pair.1.wait_state.is_none())
-            .cycle()
-            .nth(tid)
-            .expect("i should probably handle the process not having any threads");
-        Ok((procmeta.pid.clone(), tid.clone(), thread.clone()))
+    fn schedule(&mut self) -> Result<SchedulingResult> {
+        let start_robin = self.current_robin;
+        loop {
+            let robin = self
+                .get_next_robin()
+                .ok_or(CpuSchedulerError::NoProcesses)?;
+            let meta = self
+                .processes
+                .iter_mut()
+                .nth(robin)
+                .expect("robin should be in bounds of processes");
+            let start_thread_robin = meta.tid_robin;
+            loop {
+                let Some(robin) = meta.get_next_robin() else {
+                    break;
+                };
+                let thread = meta
+                    .process
+                    .threads
+                    .get(robin as u64)
+                    .expect("robin should be in TID bounds");
+                if thread.wait_state.is_none() {
+                    return Ok(SchedulingResult::Thread {
+                        pid: meta.pid,
+                        tid: robin as u64,
+                        thread: thread.clone(),
+                    });
+                }
+                if robin == start_thread_robin {
+                    // we have seen it all, and havent returned earlier with a process
+                    break;
+                }
+            }
+            if robin == start_robin {
+                // we have seen it all, and havent returned earlier with a process
+                return Ok(SchedulingResult::Wait);
+            }
+        }
     }
     fn launch_process(&mut self, process: Process) -> Result<u64> {
         let pid = self.next_pid();

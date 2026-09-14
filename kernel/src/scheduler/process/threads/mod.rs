@@ -55,8 +55,9 @@ impl ThreadStore {
         }
     }
     fn next_tid(&mut self) -> Tid {
+        let tid = self.running_tid;
         self.running_tid = self.running_tid + 1;
-        return self.running_tid;
+        return tid;
     }
     pub fn iter(&self) -> alloc::collections::btree_map::Iter<'_, u64, SchedulerThread> {
         self.threads.iter()

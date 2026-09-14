@@ -1,6 +1,6 @@
 use crate::{
     cpu_manager::{CPU_STATE_MANAGER, CpuPersistantState, get_cpu_id},
-    scheduler::{CpuScheduler, CpuSchedulerError, PROCESS_MANAGER},
+    scheduler::{CpuScheduler, CpuSchedulerError, PROCESS_MANAGER, SchedulingResult},
     syncronisation::Mutex,
     syscalls::handle_syscall,
     vectors::cpu_state,
@@ -60,7 +60,7 @@ extern "C" fn el0_aarch64_sync_handler(state: &mut cpu_state::State) {
                 .report_thread_state(tid.unwrap(), state.clone());
         }
         let maybe_schedule = scheduler.schedule();
-        let (pid, tid, thread) = match maybe_schedule {
+        let scheduling_ok = match maybe_schedule {
             Err(e) => match e {
                 CpuSchedulerError::NoProcesses => {
                     panic!("no processes to execute")
@@ -71,15 +71,19 @@ extern "C" fn el0_aarch64_sync_handler(state: &mut cpu_state::State) {
             },
             Ok(ok) => ok,
         };
-        let cpu = manager
-            .entry(get_cpu_id())
-            .or_insert(CpuPersistantState::new());
-        cpu.submit_pid_tid(pid, tid);
-        let previous_ttbr = scheduler
-            .get_process_mut(pid)
-            .expect("scheduler should have given us a correct pid")
-            .activate_memory_map();
-        cpu.submit_ttbr(previous_ttbr);
-        *state = thread.state;
+        if let SchedulingResult::Thread { pid, tid, thread } = scheduling_ok {
+            let cpu = manager
+                .entry(get_cpu_id())
+                .or_insert(CpuPersistantState::new());
+            cpu.submit_pid_tid(pid, tid);
+            let previous_ttbr = scheduler
+                .get_process_mut(pid)
+                .expect("scheduler should have given us a correct pid")
+                .activate_memory_map();
+            cpu.submit_ttbr(previous_ttbr);
+            *state = thread.state;
+        } else {
+            todo!("handle cpu waiting")
+        };
     });
 }
