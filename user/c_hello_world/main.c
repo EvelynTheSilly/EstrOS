@@ -3,7 +3,7 @@
 #include <stdio.h>
 
 int main(){
-    char hello[] = "haiii";
+    char hello[] = "hello from estros";
     puts(hello);
     sys_exit();
 }
