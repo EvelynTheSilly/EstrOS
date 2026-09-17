@@ -1,6 +1,5 @@
 use crate::{
     mem::paging::{EstrTranslation, kernel_virtual_to_physical},
-    println,
     scheduler::process::{messages::MessageStore, threads::ThreadStore},
 };
 use aarch64_paging::{
@@ -104,7 +103,6 @@ impl Process {
                 )
                 .map_err(|_| ProccessError::ElfParseError("failed to map one of the pages"))?;
         }
-        println!("mapped all headers");
         let common_data = elf
             .find_common_data()
             .map_err(|_| ProccessError::ElfParseError("elf has no common data"))?;
