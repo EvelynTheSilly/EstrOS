@@ -39,8 +39,9 @@ impl ProcessMeta {
 
 impl RoundRobinScheduler {
     fn next_pid(&mut self) -> u64 {
+        let pid = self.running_pid;
         self.running_pid = self.running_pid + 1;
-        return self.running_pid;
+        return pid;
     }
 
     /// always returns the next index into the proccesses vector, bounded by its length
