@@ -26,7 +26,6 @@ impl MemoryReservationBlock {
                     size: u64::from_be(*(counter.add(8) as *const u64)),
                 };
                 if entry.address == 0 && entry.size == 0 {
-                    println!("reached the end of entries block");
                     break;
                 }
                 entries.push(entry);

@@ -25,7 +25,6 @@ pub struct Dtb {
 impl Dtb {
     pub fn new(base: *const u8) -> Result<Dtb> {
         let header = unsafe { DtbHeader::new(base) };
-        println!("header {:?}", header);
         // header can be concidered sane after this
         header.is_sane()?;
         let mem_base;
