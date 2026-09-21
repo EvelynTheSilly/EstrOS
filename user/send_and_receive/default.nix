@@ -9,7 +9,7 @@
       else "-O2";
   in
     pkgs.stdenv.mkDerivation {
-      name = "send_and_recieve";
+      name = "send_and_receive";
       src = ./.;
       nativeBuildInputs = [
         cc.packages.aarch64-estros-binutils

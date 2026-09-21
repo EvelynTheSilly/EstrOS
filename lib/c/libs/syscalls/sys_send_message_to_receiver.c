@@ -1,6 +1,6 @@
 #include "syscalls.h"
 
-uint64_t sys_send_message_to_reciever(uint64_t pid, uint64_t channel_id, const void *buf, size_t len) {
+uint64_t sys_send_message_to_receiver(uint64_t pid, uint64_t channel_id, const void *buf, size_t len) {
     register uint64_t r0 __asm__("x0") = pid;
     register uint64_t r1 __asm__("x1") = channel_id;
     register const void *r2 __asm__("x2") = buf;

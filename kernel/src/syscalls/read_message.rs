@@ -1,11 +1,11 @@
 /// interface:
-/// x0: reciever id
+/// x0: receiver id
 /// x1: mid
 /// x2: pointer
 /// x3: len
 ///
 /// errors:
-/// 1: invalid reciever id
+/// 1: invalid receiver id
 /// 2: invalid mid
 /// 3: memory write fail
 ///
@@ -19,7 +19,7 @@ use crate::{
 };
 
 pub fn read_message(state: &mut State, pid: u64, _tid: u64) -> SyscallResult {
-    let reciever_id = state.x[0];
+    let receiver_id = state.x[0];
     let mid = state.x[1];
     let process_pointer = state.x[2];
     let len = state.x[3];
@@ -27,7 +27,7 @@ pub fn read_message(state: &mut State, pid: u64, _tid: u64) -> SyscallResult {
         let Ok(process) = manager.get_process_mut(pid) else {
             return None;
         };
-        let Some(channel) = process.recieving_channels.get_mut(&reciever_id) else {
+        let Some(channel) = process.receiving_channels.get_mut(&receiver_id) else {
             return syscall_err(1);
         };
         let Ok(buff) = channel.read_message(mid, len as usize) else {

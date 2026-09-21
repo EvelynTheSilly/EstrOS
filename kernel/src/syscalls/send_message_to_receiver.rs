@@ -1,12 +1,12 @@
 /// interface:
 /// x0: pid
-/// x1: reciever id
+/// x1: receiver id
 /// x2: pointer
 /// x3: len
 ///
 /// errors:
 /// 1: invalid target pid
-/// 2: invalid reciever pid
+/// 2: invalid receiver pid
 /// 3: memory read error
 ///
 /// returns: 0
@@ -21,10 +21,10 @@ use crate::{
     vectors::cpu_state::State,
 };
 
-pub fn send_message_to_reciever(state: &mut State, pid: u64, _tid: u64) -> SyscallResult {
+pub fn send_message_to_receiver(state: &mut State, pid: u64, _tid: u64) -> SyscallResult {
     PROCESS_MANAGER.lock(|process_manager| {
         let target_pid = state.x[0];
-        let reciever_id = state.x[1];
+        let receiver_id = state.x[1];
         let pointer = state.x[2] as usize;
         let len = state.x[3] as usize;
 
@@ -44,7 +44,7 @@ pub fn send_message_to_reciever(state: &mut State, pid: u64, _tid: u64) -> Sysca
 
         // send message to target proc
         let mid;
-        if let Some(store) = target_proc.recieving_channels.get_mut(&reciever_id) {
+        if let Some(store) = target_proc.receiving_channels.get_mut(&receiver_id) {
             mid = store.push_message(Message::new(message_data));
         } else {
             return syscall_err(2);
@@ -57,8 +57,8 @@ pub fn send_message_to_reciever(state: &mut State, pid: u64, _tid: u64) -> Sysca
             .map(|pair| pair.1)
             .for_each(|thread| {
                 match thread.wait_state {
-                    WaitState::MessageWait(waited_on_reciever) => {
-                        if waited_on_reciever == reciever_id {
+                    WaitState::MessageWait(waited_on_receiver) => {
+                        if waited_on_receiver == receiver_id {
                             thread.state.x[0] = mid;
                         }
                         thread.wait_state = WaitState::None;

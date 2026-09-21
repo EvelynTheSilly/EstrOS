@@ -1,8 +1,8 @@
 use crate::{
     syscalls::{
         exit::exit, kill_thread::kill_thread, read_message::read_message,
-        send_message_to_reciever::send_message_to_reciever, spawn_reciever::spawn_reciever,
-        spawn_thread::spawn_thread, wait_on_message_from_reciever::wait_on_message_from_reciever,
+        send_message_to_receiver::send_message_to_receiver, spawn_receiver::spawn_receiver,
+        spawn_thread::spawn_thread, wait_on_message_from_receiver::wait_on_message_from_receiver,
         wait_on_thread::wait_on_thread, write_to_uart::write_to_uart,
     },
     vectors::cpu_state::State,
@@ -11,10 +11,10 @@ use thiserror::Error;
 mod exit;
 mod kill_thread;
 mod read_message;
-mod send_message_to_reciever;
-mod spawn_reciever;
+mod send_message_to_receiver;
+mod spawn_receiver;
 mod spawn_thread;
-mod wait_on_message_from_reciever;
+mod wait_on_message_from_receiver;
 mod wait_on_thread;
 mod write_to_uart;
 
@@ -28,9 +28,9 @@ const SYSCALLS: &[fn(&mut State, u64, u64) -> SyscallResult] = &[
     spawn_thread,
     kill_thread,
     wait_on_thread,
-    spawn_reciever,
-    wait_on_message_from_reciever,
-    send_message_to_reciever,
+    spawn_receiver,
+    wait_on_message_from_receiver,
+    send_message_to_receiver,
 ];
 
 pub fn handle_syscall(state: &mut State, iss: u64, pid: u64, tid: u64) {

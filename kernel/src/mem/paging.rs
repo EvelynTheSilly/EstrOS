@@ -50,7 +50,7 @@ impl aarch64_paging::paging::Translation for EstrTranslation {
     ) -> core::ptr::NonNull<aarch64_paging::paging::PageTable> {
         let base = phys_base();
         NonNull::new((pa.0 + 0xFFFFFFFF80000000 - base) as *mut PageTable)
-            .expect("invalid physical page address recieved")
+            .expect("invalid physical page address received")
     }
 }
 

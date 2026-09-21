@@ -1,5 +1,5 @@
 /// interface:
-/// x0: recieve on channel
+/// x0: receive on channel
 ///
 /// errors:
 /// 1: channel already exists
@@ -12,14 +12,14 @@ use crate::{
     vectors::cpu_state::State,
 };
 
-pub fn spawn_reciever(state: &mut State, pid: u64, _tid: u64) -> SyscallResult {
+pub fn spawn_receiver(state: &mut State, pid: u64, _tid: u64) -> SyscallResult {
     PROCESS_MANAGER.lock(|process_manager| {
         let id = state.x[0];
         let proc = process_manager.get_process_mut(pid).ok()?;
-        if proc.recieving_channels.contains_key(&id) {
+        if proc.receiving_channels.contains_key(&id) {
             return syscall_err(1);
         }
-        proc.recieving_channels.insert(id, MessageStore::new());
+        proc.receiving_channels.insert(id, MessageStore::new());
         Some(Ok(0))
     })
 }

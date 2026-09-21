@@ -12,12 +12,12 @@ use crate::{
     vectors::cpu_state::State,
 };
 
-pub fn wait_on_message_from_reciever(state: &mut State, pid: u64, tid: u64) -> SyscallResult {
+pub fn wait_on_message_from_receiver(state: &mut State, pid: u64, tid: u64) -> SyscallResult {
     PROCESS_MANAGER.lock(|process_manager| {
         let target_message_channel = state.x[0];
         // if target thread doesnt exist
         let proc = process_manager.get_process_mut(pid).ok()?;
-        let Some(channel) = proc.recieving_channels.get_mut(&target_message_channel) else {
+        let Some(channel) = proc.receiving_channels.get_mut(&target_message_channel) else {
             return syscall_err(1);
         };
 

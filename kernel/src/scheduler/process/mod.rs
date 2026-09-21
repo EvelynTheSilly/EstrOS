@@ -39,7 +39,7 @@ pub struct Process {
     pub segments: Vec<SegmentAllocation>,
     pub memory_map: Mapping<EstrTranslation>,
     pub threads: ThreadStore,
-    pub recieving_channels: BTreeMap<MessageChannelId, MessageStore>,
+    pub receiving_channels: BTreeMap<MessageChannelId, MessageStore>,
 }
 
 impl Process {
@@ -128,7 +128,7 @@ impl Process {
         threads.spawn(SchedulerThread::at(start_address));
 
         Ok(Process {
-            recieving_channels: BTreeMap::new(),
+            receiving_channels: BTreeMap::new(),
             segments,
             memory_map: memmap,
             threads,
