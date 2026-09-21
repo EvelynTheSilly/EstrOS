@@ -1,5 +1,5 @@
 use crate::{
-    println,
+    print,
     scheduler::{CpuScheduler, PROCESS_MANAGER},
     syncronisation::Mutex,
     syscalls::{SyscallError, SyscallResult},
@@ -19,7 +19,7 @@ pub fn write_to_uart(state: &mut State, pid: u64, _tid: u64) -> SyscallResult {
             return Some(Err(SyscallError { code: 1 }));
         }
         let s = String::from_utf8_lossy(&buffer.as_slice());
-        println!("{}", s);
+        print!("{}", s);
         return Some(Ok(0));
     })
 }
