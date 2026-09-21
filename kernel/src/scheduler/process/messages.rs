@@ -2,6 +2,7 @@ use alloc::{collections::BTreeMap, vec::Vec};
 use thiserror::Error;
 
 pub type Mid = u64;
+pub type MessageChannelId = u64;
 pub type Result<T> = core::result::Result<T, MessageError>;
 
 #[derive(Error, Debug)]
@@ -10,20 +11,23 @@ pub enum MessageError {
     InvalidMid,
 }
 
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct MessageStore {
     next_mid: Mid,
     data: BTreeMap<Mid, Message>,
 }
 
+#[derive(Default, Clone)]
 pub struct Message {
+    pub waited_on: bool,
     data: Vec<u8>,
     read_pointer: usize,
 }
 
 impl Message {
-    fn new(data: Vec<u8>) -> Self {
+    pub fn new(data: Vec<u8>) -> Self {
         Message {
+            waited_on: false,
             data,
             read_pointer: 0,
         }
@@ -57,19 +61,22 @@ impl Message {
 }
 
 impl MessageStore {
+    pub fn get_unwaited_message(&self) -> Option<Mid> {
+        self.data
+            .iter()
+            .find(|item| !item.1.waited_on)
+            .map(|some| some.0.clone())
+    }
     pub fn new() -> Self {
-        let mut data = BTreeMap::new();
-        data.insert(
-            0 as Mid,
-            Message::new("this is a message which is being read".as_bytes().to_vec()),
-        );
-        MessageStore { next_mid: 0, data }
+        MessageStore::default()
     }
-    pub fn push_message(&mut self, message: Message) {
-        self.data.insert(self.next_mid, message);
+    pub fn push_message(&mut self, message: Message) -> Mid {
+        let mid = self.next_mid;
+        self.data.insert(mid, message);
         self.next_mid += 1;
+        return mid;
     }
-    fn get_message_mut(&mut self, mid: &Mid) -> Result<&mut Message> {
+    pub fn get_message_mut(&mut self, mid: &Mid) -> Result<&mut Message> {
         self.data.get_mut(mid).ok_or(MessageError::InvalidMid)
     }
     /// returns either the length of the message, or the requested length (whichever is less)

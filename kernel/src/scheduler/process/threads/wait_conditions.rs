@@ -1,10 +1,11 @@
-use crate::scheduler::process::threads::Tid;
+use crate::scheduler::process::{messages::MessageChannelId, threads::Tid};
 
 #[derive(Default, Clone, Debug)]
 pub enum WaitState {
     #[default]
     None,
     TidWait(Tid),
+    MessageWait(MessageChannelId),
 }
 
 pub enum WaitStateUpdate {

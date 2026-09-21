@@ -13,10 +13,10 @@
       cross = pkgs.pkgsCross.aarch64-embedded;
       isLinux = system != "aarch64-darwin";
       inits = self.estros.inits;
-      releaseInit1 = self.lib.buildInit { init = inits.thread_test.release; };
-      debugInit1 = self.lib.buildInit { init = inits.thread_test.debug; };
-      releaseInit2 = self.lib.buildInit { init = inits.c_hello_world.release; };
-      debugInit2 = self.lib.buildInit { init = inits.c_hello_world.debug; };
+      releaseInit1 = self.lib.buildInit { init = inits.receive.release; };
+      debugInit1 = self.lib.buildInit { init = inits.receive.debug; };
+      releaseInit2 = self.lib.buildInit { init = inits.send.release; };
+      debugInit2 = self.lib.buildInit { init = inits.send.debug; };
 
       release = self.lib.qemu.buildDiskImage {
         inits = [

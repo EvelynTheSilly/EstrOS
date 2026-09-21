@@ -1,13 +1,16 @@
 use crate::{
     mem::paging::{EstrTranslation, kernel_virtual_to_physical},
-    scheduler::process::{messages::MessageStore, threads::ThreadStore},
+    scheduler::process::{
+        messages::{MessageChannelId, MessageStore},
+        threads::ThreadStore,
+    },
 };
 use aarch64_paging::{
     Mapping,
     descriptor::PhysicalAddress,
     paging::{Constraints, MemoryRegion, PAGE_SIZE},
 };
-use alloc::{alloc::alloc, vec::Vec};
+use alloc::{alloc::alloc, collections::BTreeMap, vec::Vec};
 use allocations::{SchedulerPointer, SegmentAllocation, elf_flags_to_mmu_constrains};
 use core::{alloc::Layout, arch::asm};
 use elf::{ElfBytes, abi::PT_LOAD, endian::AnyEndian};
@@ -16,7 +19,7 @@ use threads::SchedulerThread;
 
 mod allocations;
 mod mem;
-mod messages;
+pub mod messages;
 pub mod threads;
 
 #[derive(Error, Debug)]
@@ -33,10 +36,10 @@ pub(crate) enum ProccessError {
 type Result<T> = core::result::Result<T, ProccessError>;
 
 pub struct Process {
-    pub message_store: MessageStore,
     pub segments: Vec<SegmentAllocation>,
     pub memory_map: Mapping<EstrTranslation>,
     pub threads: ThreadStore,
+    pub recieving_channels: BTreeMap<MessageChannelId, MessageStore>,
 }
 
 impl Process {
@@ -125,7 +128,7 @@ impl Process {
         threads.spawn(SchedulerThread::at(start_address));
 
         Ok(Process {
-            message_store: MessageStore::new(),
+            recieving_channels: BTreeMap::new(),
             segments,
             memory_map: memmap,
             threads,
