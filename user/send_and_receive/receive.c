@@ -16,4 +16,19 @@ int main(){
     sys_read_message(0, mid, buffer, 64);
     puts("RECEIVER: ");
     puts(buffer);
+    while (1) {
+        for (int i = 0; i < 100; i++) {
+            // let sender type shit
+            sys_noop();
+        };
+        uint64_t midloop = sys_wait_on_message_from_receiver(0);
+        char buffer[64];
+        for (int i = 0; i<64; i++) {
+            buffer[i] = 0;
+        }
+        sys_read_message(0, midloop, buffer, 64);   
+        puts("RECEIVER: ");
+        puts(buffer);
+        putc('\n');
+    }
 }
