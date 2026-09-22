@@ -1,12 +1,4 @@
 #include "syscalls.h"
+#include <syscall_macros.h>
 
-uint64_t sys_spawn_receiver(uint64_t channel_id) {
-    register uint64_t r0 __asm__("x0") = channel_id;
-
-    __asm__ volatile("svc #9"
-                     : "+r"(r0)
-                     :
-                     : "memory");
-
-    return r0;
-}
+SYSCALL1(uint64_t, sys_spawn_receiver, 9, uint64_t, channel_id);

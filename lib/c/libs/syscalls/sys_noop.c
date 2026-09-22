@@ -1,5 +1,4 @@
 #include "syscalls.h"
+#include <syscall_macros.h>
 
-void sys_noop(void) {
-    __asm__ volatile("svc #0");
-}
+SYSCALL0NORET(sys_noop, 0);

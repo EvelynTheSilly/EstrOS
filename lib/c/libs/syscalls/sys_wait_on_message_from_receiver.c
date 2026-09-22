@@ -1,12 +1,4 @@
 #include "syscalls.h"
+#include <syscall_macros.h>
 
-uint64_t sys_wait_on_message_from_receiver(uint64_t channel_id) {
-    register uint64_t r0 __asm__("x0") = channel_id;
-
-    __asm__ volatile("svc #10"
-                     : "+r"(r0)
-                     :
-                     : "memory");
-
-    return r0;
-}
+SYSCALL1(uint64_t, sys_wait_on_message_from_receiver, 10, uint64_t, channel_id);

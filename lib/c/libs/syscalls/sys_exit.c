@@ -1,5 +1,4 @@
 #include "syscalls.h"
+#include <syscall_macros.h>
 
-void sys_exit(void) {
-    __asm__ volatile("svc #2");
-}
+SYSCALL0NORET(sys_exit, 2);

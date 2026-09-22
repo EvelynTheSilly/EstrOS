@@ -14,7 +14,7 @@ let
       }
       ''
         mkdir -p $out/lib
-        CFLAGS="-march=armv8-a -ffreestanding -nostdlib -fno-builtin -isystem ${sysroot}/include"
+        CFLAGS="-march=armv8-a -ffreestanding -nostdlib -fno-builtin -isystem ${sysroot}/include -isystem ${sysroot}/internal"
 
         for f in $src/crt.c $src/crt.S; do
           [ -e "$f" ] || continue
