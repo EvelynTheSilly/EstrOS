@@ -1,14 +1,16 @@
 //! keeps track of the state of all cpu cores
 
+use crate::{
+    scheduler::process::{Pid, threads::Tid},
+    syncronisation::GlobalSharedLock,
+};
 use alloc::collections::btree_map::BTreeMap;
-
-use crate::syncronisation::GlobalSharedLock;
 
 /// a set of data the persists when a cpu
 pub struct CpuPersistantState {
     previous_ttbr: Option<usize>,
-    executing_pid: Option<u64>,
-    executing_tid: Option<u64>,
+    executing_pid: Option<Pid>,
+    executing_tid: Option<Tid>,
 }
 
 impl CpuPersistantState {
@@ -19,16 +21,16 @@ impl CpuPersistantState {
             executing_tid: None,
         }
     }
-    pub fn submit_pid_tid(&mut self, pid: u64, tid: u64) {
+    pub fn submit_pid_tid(&mut self, pid: Pid, tid: Tid) {
         self.executing_pid = Some(pid);
         self.executing_tid = Some(tid);
     }
-    pub fn get_pid(&mut self) -> Option<u64> {
+    pub fn get_pid(&mut self) -> Option<Pid> {
         let pid = self.executing_pid;
         self.executing_pid = None;
         pid
     }
-    pub fn get_tid(&mut self) -> Option<u64> {
+    pub fn get_tid(&mut self) -> Option<Tid> {
         let tid = self.executing_tid;
         self.executing_tid = None;
         tid

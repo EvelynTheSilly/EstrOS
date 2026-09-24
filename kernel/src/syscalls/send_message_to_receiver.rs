@@ -14,16 +14,16 @@ use crate::{
     alloc::vec,
     scheduler::{
         CpuScheduler, PROCESS_MANAGER,
-        process::{messages::Message, threads::wait_conditions::WaitState},
+        process::{messages::Message, threads::wait_conditions::WaitState, Pid, threads::Tid},
     },
     syncronisation::Mutex,
     syscalls::{SyscallResult, syscall_err},
     vectors::cpu_state::State,
 };
 
-pub fn send_message_to_receiver(state: &mut State, pid: u64, _tid: u64) -> SyscallResult {
+pub fn send_message_to_receiver(state: &mut State, pid: Pid, _tid: Tid) -> SyscallResult {
     PROCESS_MANAGER.lock(|process_manager| {
-        let target_pid = state.x[0];
+        let target_pid: Pid = state.x[0];
         let receiver_id = state.x[1];
         let pointer = state.x[2] as usize;
         let len = state.x[3] as usize;

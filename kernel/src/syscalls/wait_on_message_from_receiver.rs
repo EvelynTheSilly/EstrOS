@@ -6,13 +6,13 @@
 ///
 /// returns: mid
 use crate::{
-    scheduler::{CpuScheduler, PROCESS_MANAGER, process::threads::wait_conditions::WaitState},
+    scheduler::{CpuScheduler, PROCESS_MANAGER, process::{Pid, threads::{Tid, wait_conditions::WaitState}}},
     syncronisation::Mutex,
     syscalls::{SyscallResult, syscall_err},
     vectors::cpu_state::State,
 };
 
-pub fn wait_on_message_from_receiver(state: &mut State, pid: u64, tid: u64) -> SyscallResult {
+pub fn wait_on_message_from_receiver(state: &mut State, pid: Pid, tid: Tid) -> SyscallResult {
     PROCESS_MANAGER.lock(|process_manager| {
         let target_message_channel = state.x[0];
         // if target thread doesnt exist

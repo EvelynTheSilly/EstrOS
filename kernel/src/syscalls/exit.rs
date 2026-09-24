@@ -1,11 +1,11 @@
 use crate::{
-    scheduler::{CpuScheduler, PROCESS_MANAGER},
+    scheduler::{CpuScheduler, PROCESS_MANAGER, process::{Pid, threads::Tid}},
     syncronisation::Mutex,
     syscalls::SyscallResult,
     vectors::cpu_state::State,
 };
 
-pub fn exit(_state: &mut State, pid: u64, _tid: u64) -> SyscallResult {
+pub fn exit(_state: &mut State, pid: Pid, _tid: Tid) -> SyscallResult {
     PROCESS_MANAGER.lock(|scheduler| {
         scheduler
             .kill_process(pid)

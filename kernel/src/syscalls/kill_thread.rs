@@ -9,16 +9,16 @@
 /// returns: 0
 use crate::{
     scheduler::{
-        CpuScheduler, PROCESS_MANAGER, process::threads::wait_conditions::WaitStateUpdate,
+        CpuScheduler, PROCESS_MANAGER, process::{Pid, threads::{Tid, wait_conditions::WaitStateUpdate}},
     },
     syncronisation::Mutex,
     syscalls::{SyscallResult, syscall_err},
     vectors::cpu_state::State,
 };
 
-pub fn kill_thread(state: &mut State, pid: u64, _tid: u64) -> SyscallResult {
+pub fn kill_thread(state: &mut State, pid: Pid, _tid: Tid) -> SyscallResult {
     PROCESS_MANAGER.lock(|process_manager| {
-        let tid = state.x[0];
+        let tid: Tid = state.x[0];
         let code = state.x[1];
         let Ok(proc) = process_manager.get_process_mut(pid) else {
             return syscall_err(2);

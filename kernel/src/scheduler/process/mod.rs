@@ -35,6 +35,8 @@ pub(crate) enum ProccessError {
 }
 type Result<T> = core::result::Result<T, ProccessError>;
 
+pub type Pid = u64;
+
 pub struct Process {
     pub segments: Vec<SegmentAllocation>,
     pub memory_map: Mapping<EstrTranslation>,

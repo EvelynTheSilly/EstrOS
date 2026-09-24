@@ -1,16 +1,16 @@
-use crate::scheduler::{CpuScheduler, Result, process::Process};
-use crate::scheduler::{CpuSchedulerError, SchedulingResult};
+use crate::scheduler::process::{Pid, Process, threads::Tid};
+use crate::scheduler::{CpuScheduler, CpuSchedulerError, Result, SchedulingResult};
 use alloc::vec::Vec;
 
 struct ProcessMeta {
-    pid: u64,
+    pid: Pid,
     tid_robin: usize,
     process: Process,
 }
 
 pub struct RoundRobinScheduler {
     processes: Vec<ProcessMeta>,
-    running_pid: u64,
+    running_pid: Pid,
     current_robin: usize,
 }
 
@@ -38,7 +38,7 @@ impl ProcessMeta {
 }
 
 impl RoundRobinScheduler {
-    fn next_pid(&mut self) -> u64 {
+    fn next_pid(&mut self) -> Pid {
         let pid = self.running_pid;
         self.running_pid = self.running_pid + 1;
         return pid;
@@ -55,10 +55,10 @@ impl RoundRobinScheduler {
         self.current_robin = robin;
         Some(robin)
     }
-    fn has_pid(&self, looking_for: u64) -> bool {
+    fn has_pid(&self, looking_for: Pid) -> bool {
         self.processes.iter().any(|meta| meta.pid == looking_for)
     }
-    fn get_index_by_pid(&self, pid: u64) -> Option<usize> {
+    fn get_index_by_pid(&self, pid: Pid) -> Option<usize> {
         let mut index = None;
         for (i, meta) in self.processes.iter().enumerate() {
             if meta.pid == pid {
@@ -67,10 +67,10 @@ impl RoundRobinScheduler {
         }
         index
     }
-    fn get_proc_by_pid(&self, pid: u64) -> Option<&ProcessMeta> {
+    fn get_proc_by_pid(&self, pid: Pid) -> Option<&ProcessMeta> {
         self.processes.iter().find(|meta| meta.pid == pid)
     }
-    fn get_proc_by_pid_mut(&mut self, pid: u64) -> Option<&mut ProcessMeta> {
+    fn get_proc_by_pid_mut(&mut self, pid: Pid) -> Option<&mut ProcessMeta> {
         self.processes.iter_mut().find(|meta| meta.pid == pid)
     }
 }
@@ -102,7 +102,7 @@ impl CpuScheduler for RoundRobinScheduler {
                 if thread.wait_state.is_none() {
                     return Ok(SchedulingResult::Thread {
                         pid: meta.pid,
-                        tid: robin as u64,
+                        tid: robin as Tid,
                         thread: thread.clone(),
                     });
                 }
@@ -117,7 +117,7 @@ impl CpuScheduler for RoundRobinScheduler {
             }
         }
     }
-    fn launch_process(&mut self, process: Process) -> Result<u64> {
+    fn launch_process(&mut self, process: Process) -> Result<Pid> {
         let pid = self.next_pid();
         self.processes.push(ProcessMeta {
             pid,
@@ -126,7 +126,7 @@ impl CpuScheduler for RoundRobinScheduler {
         });
         Ok(pid)
     }
-    fn kill_process(&mut self, pid: u64) -> Result<()> {
+    fn kill_process(&mut self, pid: Pid) -> Result<()> {
         let index = self
             .get_index_by_pid(pid)
             .ok_or(CpuSchedulerError::InvalidPid(pid))?;
@@ -134,13 +134,13 @@ impl CpuScheduler for RoundRobinScheduler {
         Ok(())
     }
 
-    fn get_process(&self, pid: u64) -> Result<&Process> {
+    fn get_process(&self, pid: Pid) -> Result<&Process> {
         let meta = self
             .get_proc_by_pid(pid)
             .ok_or(CpuSchedulerError::InvalidPid(pid))?;
         Ok(&meta.process)
     }
-    fn get_process_mut(&mut self, pid: u64) -> Result<&mut Process> {
+    fn get_process_mut(&mut self, pid: Pid) -> Result<&mut Process> {
         let meta = self
             .get_proc_by_pid_mut(pid)
             .ok_or(CpuSchedulerError::InvalidPid(pid))?;

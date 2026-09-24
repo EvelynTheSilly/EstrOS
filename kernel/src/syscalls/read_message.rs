@@ -12,13 +12,13 @@
 /// contract:
 /// it will read LEN bytes from MID to POINTER
 use crate::{
-    scheduler::{CpuScheduler, PROCESS_MANAGER},
+    scheduler::{CpuScheduler, PROCESS_MANAGER, process::{Pid, threads::Tid}},
     syncronisation::Mutex,
     syscalls::{SyscallResult, syscall_err},
     vectors::cpu_state::State,
 };
 
-pub fn read_message(state: &mut State, pid: u64, _tid: u64) -> SyscallResult {
+pub fn read_message(state: &mut State, pid: Pid, _tid: Tid) -> SyscallResult {
     let receiver_id = state.x[0];
     let mid = state.x[1];
     let process_pointer = state.x[2];

@@ -13,7 +13,7 @@ pub(crate) enum ThreadError {
     InvalidTid,
 }
 type Result<T> = core::result::Result<T, ThreadError>;
-type Tid = u64;
+pub type Tid = u64;
 
 #[derive(Clone)]
 pub struct ThreadStore {
@@ -59,10 +59,10 @@ impl ThreadStore {
         self.running_tid = self.running_tid + 1;
         return tid;
     }
-    pub fn iter(&self) -> alloc::collections::btree_map::Iter<'_, u64, SchedulerThread> {
+    pub fn iter(&self) -> alloc::collections::btree_map::Iter<'_, Tid, SchedulerThread> {
         self.threads.iter()
     }
-    pub fn iter_mut(&mut self) -> alloc::collections::btree_map::IterMut<'_, u64, SchedulerThread> {
+    pub fn iter_mut(&mut self) -> alloc::collections::btree_map::IterMut<'_, Tid, SchedulerThread> {
         self.threads.iter_mut()
     }
     pub fn get(&self, tid: Tid) -> Result<&SchedulerThread> {
@@ -82,7 +82,7 @@ impl ThreadStore {
         self.threads.insert(tid, thread);
         tid
     }
-    pub fn report_thread_state(&mut self, tid: u64, state: State) -> Result<()> {
+    pub fn report_thread_state(&mut self, tid: Tid, state: State) -> Result<()> {
         self.threads
             .get_mut(&tid)
             .ok_or(ThreadError::InvalidTid)?

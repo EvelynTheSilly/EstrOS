@@ -6,13 +6,13 @@
 ///
 /// returns: 0
 use crate::{
-    scheduler::{CpuScheduler, PROCESS_MANAGER, process::messages::MessageStore},
+    scheduler::{CpuScheduler, PROCESS_MANAGER, process::{messages::MessageStore, Pid, threads::Tid}},
     syncronisation::Mutex,
     syscalls::{SyscallResult, syscall_err},
     vectors::cpu_state::State,
 };
 
-pub fn spawn_receiver(state: &mut State, pid: u64, _tid: u64) -> SyscallResult {
+pub fn spawn_receiver(state: &mut State, pid: Pid, _tid: Tid) -> SyscallResult {
     PROCESS_MANAGER.lock(|process_manager| {
         let id = state.x[0];
         let proc = process_manager.get_process_mut(pid).ok()?;

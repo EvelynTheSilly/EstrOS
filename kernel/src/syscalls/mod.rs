@@ -1,4 +1,5 @@
 use crate::{
+    scheduler::process::{Pid, threads::Tid},
     syscalls::{
         exit::exit, kill_thread::kill_thread, read_message::read_message,
         send_message_to_receiver::send_message_to_receiver, spawn_receiver::spawn_receiver,
@@ -18,7 +19,7 @@ mod wait_on_message_from_receiver;
 mod wait_on_thread;
 mod write_to_uart;
 
-const SYSCALLS: &[fn(&mut State, u64, u64) -> SyscallResult] = &[
+const SYSCALLS: &[fn(&mut State, Pid, Tid) -> SyscallResult] = &[
     |_, _, _| None, // noop
     write_to_uart,
     exit,
@@ -33,7 +34,7 @@ const SYSCALLS: &[fn(&mut State, u64, u64) -> SyscallResult] = &[
     send_message_to_receiver,
 ];
 
-pub fn handle_syscall(state: &mut State, iss: u64, pid: u64, tid: u64) {
+pub fn handle_syscall(state: &mut State, iss: u64, pid: Pid, tid: Tid) {
     let Some(syscall_fn) = SYSCALLS.get(iss as usize) else {
         return;
     };
@@ -42,9 +43,9 @@ pub fn handle_syscall(state: &mut State, iss: u64, pid: u64, tid: u64) {
 
 fn syscall_call(
     state: &mut State,
-    pid: u64,
-    tid: u64,
-    syscall_fn: fn(&mut State, u64, u64) -> SyscallResult,
+    pid: Pid,
+    tid: Tid,
+    syscall_fn: fn(&mut State, Pid, Tid) -> SyscallResult,
 ) {
     let ret = syscall_fn(state, pid, tid);
     if let Some(ret) = ret {

@@ -7,13 +7,13 @@
 ///
 /// returns: tid
 use crate::{
-    scheduler::{CpuScheduler, PROCESS_MANAGER, process::threads::SchedulerThread},
+    scheduler::{CpuScheduler, PROCESS_MANAGER, process::{Pid, threads::{SchedulerThread, Tid}}},
     syncronisation::Mutex,
     syscalls::{SyscallResult, syscall_err},
     vectors::cpu_state::State,
 };
 
-pub fn spawn_thread(state: &mut State, pid: u64, _tid: u64) -> SyscallResult {
+pub fn spawn_thread(state: &mut State, pid: Pid, _tid: Tid) -> SyscallResult {
     PROCESS_MANAGER.lock(|process_manager| {
         let location = state.x[0];
         let arg = state.x[1];
