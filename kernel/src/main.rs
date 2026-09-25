@@ -43,7 +43,6 @@ mod cpu_manager;
 mod dtb;
 mod mem;
 mod multiprocessor;
-mod rng;
 mod scheduler;
 mod syncronisation;
 mod syscalls;
