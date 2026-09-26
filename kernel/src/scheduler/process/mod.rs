@@ -18,6 +18,7 @@ use thiserror::Error;
 use threads::SchedulerThread;
 
 mod allocations;
+pub mod capabilities;
 mod mem;
 pub mod messages;
 pub mod threads;

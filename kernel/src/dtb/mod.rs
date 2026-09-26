@@ -11,7 +11,7 @@ use anyhow::Result;
 use core::fmt;
 
 mod header;
-mod memory_reservation_block;
+pub mod memory_reservation_block;
 mod strings_block;
 mod structure_block;
 

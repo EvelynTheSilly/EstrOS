@@ -1,16 +1,15 @@
+use crate::println;
 use alloc::vec;
 use alloc::vec::Vec;
 
-use crate::println;
-
 #[derive(Debug)]
 pub struct MemoryReservationBlock {
-    entries: Vec<BlockEntry>,
+    pub entries: Vec<MemoryReservationBlockEntry>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 #[repr(C)]
-struct BlockEntry {
+pub struct MemoryReservationBlockEntry {
     address: u64,
     size: u64,
 }
@@ -21,7 +20,7 @@ impl MemoryReservationBlock {
         let mut counter = base;
         unsafe {
             loop {
-                let entry = BlockEntry {
+                let entry = MemoryReservationBlockEntry {
                     address: u64::from_be(*(counter as *const u64)),
                     size: u64::from_be(*(counter.add(8) as *const u64)),
                 };
