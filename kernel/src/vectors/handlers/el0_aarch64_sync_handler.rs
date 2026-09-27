@@ -38,6 +38,7 @@ extern "C" fn el0_aarch64_sync_handler(state: &mut cpu_state::State) {
         scheduler
             .get_process_mut(pid)
             .expect("previous pid should exist")
+            .mem_manager
             .deactivate_memory_map(previous_ttbr);
     });
     match ec {
@@ -79,6 +80,7 @@ extern "C" fn el0_aarch64_sync_handler(state: &mut cpu_state::State) {
             let previous_ttbr = scheduler
                 .get_process_mut(pid)
                 .expect("scheduler should have given us a correct pid")
+                .mem_manager
                 .activate_memory_map();
             cpu.submit_ttbr(previous_ttbr);
             *state = thread.state;

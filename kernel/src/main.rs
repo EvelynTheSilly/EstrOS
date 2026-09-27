@@ -30,7 +30,7 @@ use crate::{
     vectors::cpu_state::State,
 };
 use aarch64_cpu::asm::wfi;
-use core::{arch::asm, panic::PanicInfo, sync::atomic::AtomicU64};
+use core::{panic::PanicInfo, sync::atomic::AtomicU64};
 use limine::{
     BaseRevision,
     request::{DeviceTreeBlobRequest, RequestsEndMarker, RequestsStartMarker, StackSizeRequest},
@@ -104,6 +104,7 @@ extern "C" fn get_init_process(initial_thread_state: *mut State) {
             scheduler
                 .get_process_mut(pid)
                 .expect("failed to get init proccess")
+                .mem_manager
                 .activate_memory_map()
         });
         CPU_STATE_MANAGER.lock(|cpu_manager| {
@@ -114,9 +115,6 @@ extern "C" fn get_init_process(initial_thread_state: *mut State) {
             cpu.submit_ttbr(ttbr);
         });
         *initial_thread_state = thread.state;
-        asm!("    tlbi vmalle1");
-        asm!("    dsb sy");
-        asm!("    isb");
     }
     println!("loaded init");
 }

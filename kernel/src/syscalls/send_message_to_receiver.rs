@@ -14,7 +14,7 @@ use crate::{
     alloc::vec,
     scheduler::{
         CpuScheduler, PROCESS_MANAGER,
-        process::{messages::Message, threads::wait_conditions::WaitState, Pid, threads::Tid},
+        process::{Pid, messages::Message, threads::Tid, threads::wait_conditions::WaitState},
     },
     syncronisation::Mutex,
     syscalls::{SyscallResult, syscall_err},
@@ -33,7 +33,7 @@ pub fn send_message_to_receiver(state: &mut State, pid: Pid, _tid: Tid) -> Sysca
 
         // read bytes from own process memory
         let mut message_data = vec![0 as u8; len];
-        let Ok(_) = proc.mem_read(&mut message_data, pointer) else {
+        let Ok(_) = proc.mem_manager.mem_read(&mut message_data, pointer) else {
             return syscall_err(3);
         };
 

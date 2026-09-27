@@ -12,7 +12,10 @@
 /// contract:
 /// it will read LEN bytes from MID to POINTER
 use crate::{
-    scheduler::{CpuScheduler, PROCESS_MANAGER, process::{Pid, threads::Tid}},
+    scheduler::{
+        CpuScheduler, PROCESS_MANAGER,
+        process::{Pid, threads::Tid},
+    },
     syncronisation::Mutex,
     syscalls::{SyscallResult, syscall_err},
     vectors::cpu_state::State,
@@ -34,7 +37,11 @@ pub fn read_message(state: &mut State, pid: Pid, _tid: Tid) -> SyscallResult {
             return syscall_err(2);
         };
         let read = buff.len() as u64;
-        if process.mem_write(process_pointer as usize, buff).is_err() {
+        if process
+            .mem_manager
+            .mem_write(process_pointer as usize, buff)
+            .is_err()
+        {
             syscall_err(3)
         } else {
             Some(Ok(read))

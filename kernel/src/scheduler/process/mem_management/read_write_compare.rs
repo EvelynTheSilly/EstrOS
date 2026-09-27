@@ -1,9 +1,9 @@
-use crate::scheduler::process::{ProccessError, Process, Result};
+use crate::scheduler::process::{ProccessError, Result, mem_management::ProcessMemoryManager};
 use aarch64_paging::paging::MemoryRegion;
 use alloc::vec::Vec;
 use core::sync::atomic::Ordering;
 
-impl Process {
+impl ProcessMemoryManager {
     fn walk_process_memory<F>(&self, process_pointer: usize, len: usize, mut f: F) -> Result<usize>
     where
         F: FnMut(*const u8, usize, usize),
