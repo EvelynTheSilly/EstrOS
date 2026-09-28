@@ -1,6 +1,12 @@
 use crate::{
-    mem::paging::{EstrTranslation, kernel_virtual_to_physical},
-    scheduler::process::mem_management::allocations::SegmentAllocation,
+    mem::{
+        mmu::NORMAL_CACHEABLE,
+        paging::{EstrTranslation, kernel_virtual_to_physical},
+    },
+    scheduler::process::{
+        capabilities::device_memory_capability::DeviceMemCap,
+        mem_management::allocations::SegmentAllocation,
+    },
 };
 use aarch64_paging::{
     MapError, Mapping,
@@ -62,6 +68,21 @@ impl ProcessMemoryManager {
             ),
             flags,
             constraints,
+        )
+    }
+    pub fn map_device(&mut self, va: usize, device: &DeviceMemCap) -> Result<(), MapError> {
+        let flags = NORMAL_CACHEABLE
+            | Attributes::PXN
+            | Attributes::UXN
+            | Attributes::USER
+            | Attributes::VALID
+            | Attributes::ACCESSED
+            | Attributes::NON_GLOBAL;
+        self.memory_map.map_range(
+            &MemoryRegion::new(va, device.block.size + va),
+            aarch64_paging::descriptor::PhysicalAddress(device.block.address),
+            flags,
+            Constraints::empty(),
         )
     }
 }
