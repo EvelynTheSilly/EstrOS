@@ -72,3 +72,12 @@ pub struct SyscallError {
 fn syscall_err(code: u64) -> SyscallResult {
     Some(Err(SyscallError { code }))
 }
+
+#[macro_export]
+macro_rules! syscall_assert {
+    ($condition:expr, $code:expr) => {
+        if $condition {
+            return crate::syscalls::syscall_err($code);
+        }
+    };
+}
