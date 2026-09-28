@@ -25,7 +25,7 @@ use crate::{
     dtb::Dtb,
     mem::mmu,
     multiprocessor::mp_init,
-    scheduler::{CpuScheduler, PROCESS_MANAGER, SchedulingResult, init::launch_init},
+    scheduler::{CpuScheduler, PROCESS_MANAGER, SchedulingResult, init::get_init},
     syncronisation::Mutex,
     vectors::cpu_state::State,
 };
@@ -86,10 +86,15 @@ pub extern "C" fn kernel_init() {
 
         let dtb = DTB.get_response().expect("failed to get dtb");
         let dtb = Dtb::new(dtb.dtb_ptr() as *const u8).expect("failed to parse dtb");
-        println!("{}", dtb);
 
         println!("loading init...");
-        launch_init();
+        let mut process = get_init();
+        process.capabilities.populate_mem(&dtb.memory_reservations);
+        PROCESS_MANAGER.lock(|manager| {
+            manager
+                .launch_process(process)
+                .expect("init failed to spawn")
+        });
     };
 }
 

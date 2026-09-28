@@ -13,22 +13,16 @@
       cross = pkgs.pkgsCross.aarch64-embedded;
       isLinux = system != "aarch64-darwin";
       inits = self.estros.inits;
-      releaseInit1 = self.lib.buildInit { init = inits.receive.release; };
-      debugInit1 = self.lib.buildInit { init = inits.receive.debug; };
-      releaseInit2 = self.lib.buildInit { init = inits.send.release; };
-      debugInit2 = self.lib.buildInit { init = inits.send.debug; };
+      releaseInit = self.lib.buildInit { init = inits.userspace_printer.release; };
+      debugInit = self.lib.buildInit { init = inits.userspace_printer.debug; };
 
       release = self.lib.qemu.buildDiskImage {
-        inits = [
-          releaseInit1 releaseInit2
-        ];
+        init = releaseInit;
         kernel = self'.packages.kernel_elf;
         inherit pkgs;
       };
       debug = self.lib.qemu.buildDiskImage {
-        inits = [
-          debugInit1 debugInit2
-        ];
+        init = debugInit;
         kernel = self'.packages.kernel_elf_debug;
         inherit pkgs;
       };

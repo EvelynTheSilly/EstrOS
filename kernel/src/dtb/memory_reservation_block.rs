@@ -10,8 +10,8 @@ pub struct MemoryReservationBlock {
 #[derive(Debug, Clone)]
 #[repr(C)]
 pub struct MemoryReservationBlockEntry {
-    address: u64,
-    size: u64,
+    pub address: usize,
+    pub size: usize,
 }
 
 impl MemoryReservationBlock {
@@ -21,8 +21,8 @@ impl MemoryReservationBlock {
         unsafe {
             loop {
                 let entry = MemoryReservationBlockEntry {
-                    address: u64::from_be(*(counter as *const u64)),
-                    size: u64::from_be(*(counter.add(8) as *const u64)),
+                    address: usize::from_be(*(counter as *const usize)),
+                    size: usize::from_be(*(counter.add(8) as *const usize)),
                 };
                 if entry.address == 0 && entry.size == 0 {
                     break;

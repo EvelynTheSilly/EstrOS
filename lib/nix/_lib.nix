@@ -1,4 +1,4 @@
-{ inputs, lib, ... }:
+{ inputs, ... }:
 
 let
   defineInit =
@@ -36,14 +36,14 @@ let
 
   buildDiskImage =
     {
-      inits,
+      init,
       kernel,
       pkgs,
       limine ? pkgs.limine-full,
       ovmf ? pkgs.pkgsCross.aarch64-multiplatform.OVMF.fd,
     }:
     let
-      diskImage = pkgs.runCommand "estros-disk.img" { } (''
+      diskImage = pkgs.runCommand "estros-disk.img" { } ''
         mkdir -p $out
 
         dd if=/dev/zero of=$out/disk.img bs=1M count=64
@@ -57,15 +57,13 @@ let
         ${pkgs.mtools}/bin/mmd -i $out/part.fat ::/EFI/BOOT
         ${pkgs.mtools}/bin/mcopy -i $out/part.fat ${limine}/share/limine/BOOTAA64.EFI ::/EFI/BOOT/BOOTAA64.EFI
         ${pkgs.mtools}/bin/mcopy -i $out/part.fat ${kernel}/kernel.elf ::/kernel.elf
-      ''+
-      lib.strings.join "\n" (lib.imap1 (i: init: "${pkgs.mtools}/bin/mcopy -i $out/part.fat ${init}/init.elf ::/init${toString i}.elf;") inits)
-      +''
+        ${pkgs.mtools}/bin/mcopy -i $out/part.fat ${init}/init.elf ::/init.elf
         ${pkgs.mtools}/bin/mcopy -i $out/part.fat ${limineConf} ::/limine.conf
 
         dd if=$out/part.fat of=$out/disk.img bs=1M seek=1 conv=notrunc
 
         ${pkgs.gptfdisk}/bin/sgdisk -e $out/disk.img
-      '');
+      '';
 
       efiVars = pkgs.runCommand "efi-vars.fd" { } ''
         mkdir -p $out

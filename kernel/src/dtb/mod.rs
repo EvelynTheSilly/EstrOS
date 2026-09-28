@@ -16,10 +16,10 @@ mod strings_block;
 mod structure_block;
 
 pub struct Dtb {
-    header: DtbHeader,
-    memory_reservations: MemoryReservationBlock,
-    strings: StringsBlock,
-    structure: StructureBlock,
+    pub header: DtbHeader,
+    pub memory_reservations: MemoryReservationBlock,
+    pub strings: StringsBlock,
+    pub structure: StructureBlock,
 }
 
 impl Dtb {

@@ -1,4 +1,5 @@
 use crate::scheduler::process::{
+    capabilities::CapStore,
     mem_management::ProcessMemoryManager,
     messages::{MessageChannelId, MessageStore},
     threads::ThreadStore,
@@ -31,6 +32,7 @@ type Result<T> = core::result::Result<T, ProccessError>;
 pub type Pid = u64;
 
 pub struct Process {
+    pub capabilities: CapStore,
     pub mem_manager: ProcessMemoryManager,
     pub threads: ThreadStore,
     pub receiving_channels: BTreeMap<MessageChannelId, MessageStore>,
@@ -89,6 +91,7 @@ impl Process {
             receiving_channels: BTreeMap::new(),
             mem_manager,
             threads,
+            capabilities: CapStore::default(),
         })
     }
 }
