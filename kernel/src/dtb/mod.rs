@@ -12,8 +12,8 @@ use core::fmt;
 
 mod header;
 pub mod memory_reservation_block;
-mod strings_block;
-mod structure_block;
+pub mod strings_block;
+pub mod structure_block;
 
 pub struct Dtb {
     pub header: DtbHeader,

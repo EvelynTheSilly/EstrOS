@@ -43,7 +43,7 @@ let
       ovmf ? pkgs.pkgsCross.aarch64-multiplatform.OVMF.fd,
     }:
     let
-      diskImage = pkgs.runCommand "estros-disk.img" { } ''
+      stage1 = pkgs.runCommand "estros-disk-image-stage1" { } ''
         mkdir -p $out
 
         dd if=/dev/zero of=$out/disk.img bs=1M count=64
@@ -56,17 +56,11 @@ let
         ${pkgs.mtools}/bin/mmd -i $out/part.fat ::/EFI
         ${pkgs.mtools}/bin/mmd -i $out/part.fat ::/EFI/BOOT
         ${pkgs.mtools}/bin/mcopy -i $out/part.fat ${limine}/share/limine/BOOTAA64.EFI ::/EFI/BOOT/BOOTAA64.EFI
-        ${pkgs.mtools}/bin/mcopy -i $out/part.fat ${kernel}/kernel.elf ::/kernel.elf
-        ${pkgs.mtools}/bin/mcopy -i $out/part.fat ${init}/init.elf ::/init.elf
         ${pkgs.mtools}/bin/mcopy -i $out/part.fat ${limineConf} ::/limine.conf
 
         dd if=$out/part.fat of=$out/disk.img bs=1M seek=1 conv=notrunc
 
         ${pkgs.gptfdisk}/bin/sgdisk -e $out/disk.img
-      '';
-
-      efiVars = pkgs.runCommand "efi-vars.fd" { } ''
-        mkdir -p $out
 
         cp ${ovmf}/FV/AAVMF_CODE.fd $out/AAVMF_CODE.fd
         chmod +w $out/AAVMF_CODE.fd
@@ -80,6 +74,36 @@ let
           --set-json ${bootloaderSettings} \
           --output $out/AAVMF_VARS.fd
       '';
+
+      stage2 = pkgs.runCommand "estros-disk-image-stage2" { } ''
+        mkdir -p $out
+
+        cp ${stage1}/part.fat $out/part.fat
+        chmod +w $out/part.fat
+        ${pkgs.mtools}/bin/mcopy -i $out/part.fat ${kernel}/kernel.elf ::/kernel.elf
+
+        cp ${stage1}/disk.img $out/disk.img
+        chmod +w $out/disk.img
+        dd if=$out/part.fat of=$out/disk.img bs=1M seek=1 conv=notrunc
+
+        ${pkgs.gptfdisk}/bin/sgdisk -e $out/disk.img
+      '';
+
+      diskImage = pkgs.runCommand "estros-disk-image-stage3" { } ''
+        mkdir -p $out
+
+        cp ${stage2}/part.fat $out/part.fat
+        chmod +w $out/part.fat
+        ${pkgs.mtools}/bin/mcopy -i $out/part.fat ${init}/init.elf ::/init.elf
+
+        cp ${stage2}/disk.img $out/disk.img
+        chmod +w $out/disk.img
+        dd if=$out/part.fat of=$out/disk.img bs=1M seek=1 conv=notrunc
+
+        ${pkgs.gptfdisk}/bin/sgdisk -e $out/disk.img
+      '';
+
+      efiVars = stage1;
     in
     {
       inherit diskImage efiVars;

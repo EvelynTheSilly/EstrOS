@@ -60,6 +60,26 @@ impl Node {
         }
         Ok(())
     }
+
+    pub fn prop(&self, strings: &StringsBlock, name: &str) -> Option<&[u8]> {
+        self.properties
+            .iter()
+            .find(|p| strings.get_string(p.name_off) == Some(name))
+            .map(|p| p.value.as_slice())
+    }
+
+    pub fn prop_u32(&self, strings: &StringsBlock, name: &str) -> Option<u32> {
+        let value = self.prop(strings, name)?;
+        assert_eq!(
+            value.len(),
+            4,
+            "node {} has property {} of {} bytes, expected a single u32 cell",
+            self.name,
+            name,
+            value.len()
+        );
+        Some(u32::from_be_bytes(value.try_into().unwrap()))
+    }
 }
 
 impl StructureBlock {
