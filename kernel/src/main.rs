@@ -86,26 +86,10 @@ pub extern "C" fn kernel_init() {
 
         let dtb = DTB.get_response().expect("failed to get dtb");
         let dtb = Dtb::new(dtb.dtb_ptr() as *const u8).expect("failed to parse dtb");
-        println!("{}", dtb);
 
         println!("loading init...");
         let mut process = get_init();
-        println!("{}", &dtb.memory_reservations.entries.len());
         process.capabilities.populate_mem(&dtb);
-        process
-            .mem_manager
-            .map_device(
-                0x670000,
-                process
-                    .capabilities
-                    .dev_mem_caps
-                    .iter()
-                    .find(|(_, mem)| mem.addr == 0x9000000)
-                    .inspect(|a| println!("{:x}, {}", a.1.addr, a.1.size))
-                    .map(|a| a.1)
-                    .expect("1"),
-            )
-            .unwrap();
         PROCESS_MANAGER.lock(|manager| {
             manager
                 .launch_process(process)

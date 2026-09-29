@@ -1,7 +1,4 @@
-use crate::{
-    dtb::{Dtb, strings_block::StringsBlock, structure_block::Node},
-    println,
-};
+use crate::dtb::{Dtb, strings_block::StringsBlock, structure_block::Node};
 use alloc::vec::Vec;
 
 const REG_TUPLE_BYTES: usize = 16;
@@ -46,14 +43,9 @@ impl DeviceMemCap {
 
         if let Some(reg) = node.prop(strings, "reg") {
             if reg.len() % REG_TUPLE_BYTES != 0 {
-                println!(
-                    "warn: node {} has a reg of {} bytes, not a whole number of tuples; skipping",
-                    node.name,
-                    reg.len()
-                );
             } else {
                 for tuple in reg.chunks_exact(REG_TUPLE_BYTES) {
-                    if let Some(cap) = Self::from_tuple(node, tuple) {
+                    if let Some(cap) = Self::from_tuple(tuple) {
                         out.push(cap);
                     }
                 }
@@ -61,28 +53,16 @@ impl DeviceMemCap {
         }
     }
 
-    fn from_tuple(node: &Node, tuple: &[u8]) -> Option<DeviceMemCap> {
+    fn from_tuple(tuple: &[u8]) -> Option<DeviceMemCap> {
         let addr = u64::from_be_bytes(tuple[..8].try_into().unwrap());
         let size = u64::from_be_bytes(tuple[8..].try_into().unwrap());
         if size == 0 {
-            println!(
-                "warn: node {} has a zero sized reg region; skipping",
-                node.name
-            );
             return None;
         }
         if !size.is_power_of_two() {
-            println!(
-                "warn: node {} has a reg size of {:#x}, not a power of two; skipping",
-                node.name, size
-            );
             return None;
         }
         if addr % PAGE_SIZE != 0 {
-            println!(
-                "warn: node {} has a reg address of {:#x}, not page aligned; skipping",
-                node.name, addr
-            );
             return None;
         }
         Some(DeviceMemCap {

@@ -1,9 +1,10 @@
 use crate::{
     scheduler::process::{Pid, threads::Tid},
     syscalls::{
-        exit::exit, kill_thread::kill_thread, read_message::read_message,
-        send_message_to_receiver::send_message_to_receiver, spawn_receiver::spawn_receiver,
-        spawn_thread::spawn_thread, wait_on_message_from_receiver::wait_on_message_from_receiver,
+        exit::exit, kill_thread::kill_thread, map_device_memory::map_device_memory,
+        read_message::read_message, send_message_to_receiver::send_message_to_receiver,
+        spawn_receiver::spawn_receiver, spawn_thread::spawn_thread,
+        wait_on_message_from_receiver::wait_on_message_from_receiver,
         wait_on_thread::wait_on_thread, write_to_uart::write_to_uart,
     },
     vectors::cpu_state::State,
@@ -11,6 +12,7 @@ use crate::{
 use thiserror::Error;
 mod exit;
 mod kill_thread;
+mod map_device_memory;
 mod read_message;
 mod send_message_to_receiver;
 mod spawn_receiver;
@@ -32,6 +34,7 @@ const SYSCALLS: &[fn(&mut State, Pid, Tid) -> SyscallResult] = &[
     spawn_receiver,
     wait_on_message_from_receiver,
     send_message_to_receiver,
+    map_device_memory,
 ];
 
 pub fn handle_syscall(state: &mut State, iss: u64, pid: Pid, tid: Tid) {
@@ -76,7 +79,7 @@ fn syscall_err(code: u64) -> SyscallResult {
 #[macro_export]
 macro_rules! syscall_assert {
     ($condition:expr, $code:expr) => {
-        if $condition {
+        if !$condition {
             return crate::syscalls::syscall_err($code);
         }
     };

@@ -39,5 +39,6 @@ uint64_t sys_wait_on_thread(uint64_t tid);
 uint64_t sys_spawn_receiver(uint64_t channel_id);
 uint64_t sys_wait_on_message_from_receiver(uint64_t channel_id);
 uint64_t sys_send_message_to_receiver(uint64_t pid, uint64_t channel_id, const void *buf, size_t len);
+uint64_t sys_map_device_memory(void* vaddr, uint64_t paddr, uint64_t size);
 
 #endif /* SYSCALLS_H */
