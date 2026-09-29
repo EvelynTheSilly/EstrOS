@@ -16,6 +16,7 @@
  *   9: spawn_receiver(x0=channel_id) -> 0
  *  10: wait_on_message_from_receiver(x0=channel_id) -> mid
  *  11: send_message_to_receiver(x0=pid, x1=channel_id, x2=ptr, x3=len) -> 0
+ *  12: sys_map_device_memory(x0=vaddr, x1=paddr, x2=size) -> 0
  * See kernel/src/syscalls/mod.rs for the authoritative list.
 
  * Errors are returned as non-zero codes in x0 (see kernel syscall docs).
