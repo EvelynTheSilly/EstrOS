@@ -20,13 +20,11 @@ impl MemoryReservationBlock {
         let mut counter = base;
         unsafe {
             loop {
-                println!("reading cap");
                 let entry = MemoryReservationBlockEntry {
                     address: usize::from_be(*(counter as *const usize)),
                     size: usize::from_be(*(counter.add(8) as *const usize)),
                 };
                 if entry.address == 0 && entry.size == 0 {
-                    println!("last cap");
                     break;
                 }
                 entries.push(entry);
