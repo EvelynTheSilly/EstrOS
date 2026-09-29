@@ -13,8 +13,8 @@
       cross = pkgs.pkgsCross.aarch64-embedded;
       isLinux = system != "aarch64-darwin";
       inits = self.estros.inits;
-      releaseInit = self.lib.buildInit { init = inits.userspace_printer.release; };
-      debugInit = self.lib.buildInit { init = inits.userspace_printer.debug; };
+      releaseInit = self.lib.buildInit { init = inits.process_spawner.release; };
+      debugInit = self.lib.buildInit { init = inits.process_spawner.debug; };
 
       release = self.lib.qemu.buildDiskImage {
         init = releaseInit;
@@ -32,28 +32,41 @@
         name = "estros-run";
         inherit (release) efiVars diskImage;
       };
-      debugScript = self.lib.qemu.buildScript {
+      run-debug = self.lib.qemu.buildScript {
         inherit pkgs;
-        name = "estros-debug";
+        name = "estros-run-debug";
+        inherit (debug) efiVars diskImage;
+      };
+      run-gdb = self.lib.qemu.buildScript {
+        inherit pkgs;
+        name = "estros-run-gdb";
         inherit (debug) efiVars diskImage;
         extraFlags = "-S -s";
       };
     in
     {
       packages = {
-        inherit run;
-        debug = debugScript;
+        inherit run run-debug run-gdb;
         default = run;
 
         krun = pkgs.writeShellScriptBin "krun" ''
-          exec nix run .#run -- "$@"
+          run_pkg=run
+          args=()
+          for arg in "$@"; do
+            if [[ "$arg" == "--debug" ]]; then
+              run_pkg=run-debug
+            else
+              args+=("$arg")
+            fi
+          done
+          exec nix run ".#$run_pkg" -- "''${args[@]}"
         '';
         kdebug = pkgs.writeShellScriptBin "kdebug" ''
           nix build .#gdb
           ${pkgs.alacritty}/bin/alacritty -e ./result/bin/gdb &
           gdb_pid=$!
           trap 'kill $gdb_pid 2>/dev/null' EXIT
-          exec nix run .#debug -- "$@"
+          exec nix run .#run-gdb -- "$@"
         '';
         kbacon = pkgs.writeShellScriptBin "kbacon" ''
           cd "$(git rev-parse --show-toplevel)/kernel"

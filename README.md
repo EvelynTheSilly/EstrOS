@@ -13,11 +13,13 @@ nix develop # if you dont use nix, you can find the package list in the flake
 ~~~
 run with
 ~~~sh
-just buildrun # or just run to skip the build step
+krun            # release kernel + init
+krun --debug    # debug kernel + init
 ~~~
+
 debug with 
 ~~~sh
-just fulldebug # or just debug to skip the build step
+kdebug          # debug kernel + init, halted, with gdb attached
 ~~~
 
 ## credits
