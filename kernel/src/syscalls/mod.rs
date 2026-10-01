@@ -3,7 +3,7 @@ use crate::{
     syscalls::{
         exit::exit, kill_thread::kill_thread, map_device_memory::map_device_memory,
         read_message::read_message, send_message_to_receiver::send_message_to_receiver,
-        spawn_receiver::spawn_receiver, spawn_thread::spawn_thread,
+        spawn_process::spawn_process, spawn_receiver::spawn_receiver, spawn_thread::spawn_thread,
         wait_on_message_from_receiver::wait_on_message_from_receiver,
         wait_on_thread::wait_on_thread, write_to_uart::write_to_uart,
     },
@@ -15,6 +15,7 @@ mod kill_thread;
 mod map_device_memory;
 mod read_message;
 mod send_message_to_receiver;
+mod spawn_process;
 mod spawn_receiver;
 mod spawn_thread;
 mod wait_on_message_from_receiver;
@@ -35,6 +36,7 @@ const SYSCALLS: &[fn(&mut State, Pid, Tid) -> SyscallResult] = &[
     wait_on_message_from_receiver,
     send_message_to_receiver,
     map_device_memory,
+    spawn_process,
 ];
 
 pub fn handle_syscall(state: &mut State, iss: u64, pid: Pid, tid: Tid) {

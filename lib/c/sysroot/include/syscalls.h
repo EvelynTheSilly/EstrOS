@@ -17,6 +17,7 @@
  *  10: wait_on_message_from_receiver(x0=channel_id) -> mid
  *  11: send_message_to_receiver(x0=pid, x1=channel_id, x2=ptr, x3=len) -> 0
  *  12: sys_map_device_memory(x0=vaddr, x1=paddr, x2=size) -> 0
+ *  13: spawn_process(x0=elf_ptr, x1=elf_len) -> pid
  * See kernel/src/syscalls/mod.rs for the authoritative list.
 
  * Errors are returned as non-zero codes in x0 (see kernel syscall docs).
@@ -41,5 +42,6 @@ uint64_t sys_spawn_receiver(uint64_t channel_id);
 uint64_t sys_wait_on_message_from_receiver(uint64_t channel_id);
 uint64_t sys_send_message_to_receiver(uint64_t pid, uint64_t channel_id, const void *buf, size_t len);
 uint64_t sys_map_device_memory(void* vaddr, uint64_t paddr, uint64_t size);
+uint64_t sys_spawn_process(const void *location, uint64_t len);
 
 #endif /* SYSCALLS_H */
