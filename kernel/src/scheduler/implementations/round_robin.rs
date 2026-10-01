@@ -117,7 +117,7 @@ impl CpuScheduler for RoundRobinScheduler {
             }
         }
     }
-    fn launch_process(&mut self, process: Process) -> Result<Pid> {
+    fn launch_process(&mut self, process: Process) -> Pid {
         let pid = self.next_pid();
         self.processes.push(ProcessMeta {
             pid,

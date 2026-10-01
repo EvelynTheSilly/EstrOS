@@ -21,7 +21,7 @@ pub enum SchedulingResult {
 
 pub trait CpuScheduler: Sized + Default {
     /// a process always spawns with one thread at the _start label
-    fn launch_process(&mut self, elf: Process) -> Result<Pid>;
+    fn launch_process(&mut self, elf: Process) -> Pid;
     /// returns pid and tid in that order
     fn schedule(&mut self) -> Result<SchedulingResult>;
     fn kill_process(&mut self, pid: Pid) -> Result<()>;

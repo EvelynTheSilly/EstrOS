@@ -96,9 +96,7 @@ pub extern "C" fn kernel_init() {
         let mut process = get_init();
         process.capabilities.populate_mem(&dtb);
         PROCESS_MANAGER.lock(|manager| {
-            manager
-                .launch_process(process)
-                .expect("init failed to spawn")
+            manager.launch_process(process);
         });
     };
 }
