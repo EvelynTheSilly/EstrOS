@@ -21,7 +21,7 @@ core::arch::global_asm!(
         mov x0, sp
         bl {get_init_process}
         bl load_cpu_state
-        ldr x30, [sp], #8
+        ldp x30, xzr, [sp], #16
         eret
         b .
         

@@ -51,13 +51,13 @@ macro_rules! asm_vector_table {
                 // exceptions
                 $(
                     stringify!($vector_name), ":\n",
-                    "str x30, [sp, #-8]!\n",
+                    "stp x30, xzr, [sp, #-16]!\n",
                     "bl dump_cpu_state\n",
 
                     "bl ", stringify!($vector_name), "_handler\n",
 
                     "bl load_cpu_state\n",
-                    "ldr x30, [sp], #8\n",
+                    "ldp x30, xzr, [sp], #16\n",
                     "eret\n",
 
                     ".space 128 - (. - ",stringify!($vector_name),")\n",

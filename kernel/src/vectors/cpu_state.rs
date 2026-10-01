@@ -8,6 +8,7 @@ pub struct State {
     pub spsr: u64,
     pub elr: u64,
     pub x: [u64; 31],
+    pub(crate) _pad_end: u64,
 }
 
 global_asm!(
