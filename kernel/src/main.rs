@@ -32,8 +32,8 @@ use crate::{
 use aarch64_cpu::asm::wfi;
 use core::{panic::PanicInfo, sync::atomic::AtomicU64};
 use limine::{
-    BaseRevision,
-    request::{DeviceTreeBlobRequest, RequestsEndMarker, RequestsStartMarker, StackSizeRequest},
+    BaseRevision, RequestsEndMarker, RequestsStartMarker,
+    request::{DtbRequest, HhdmRequest, StackSizeRequest},
 };
 
 pub(crate) static KERNEL_PHYS_BASE: AtomicU64 = AtomicU64::new(0);
@@ -51,14 +51,18 @@ mod vectors;
 extern crate alloc;
 
 #[used]
+#[unsafe(link_section = ".requests")]
 static BASE_REVISION: BaseRevision = BaseRevision::new();
 
 #[used]
 #[unsafe(link_section = ".requests")]
-static STACK: StackSizeRequest = StackSizeRequest::new().with_size(0x100000);
+static STACK: StackSizeRequest = StackSizeRequest::new(0x1000000);
 #[used]
 #[unsafe(link_section = ".requests")]
-static DTB: DeviceTreeBlobRequest = DeviceTreeBlobRequest::new();
+static DTB: DtbRequest = DtbRequest::new();
+#[used]
+#[unsafe(link_section = ".requests")]
+static HHDM: HhdmRequest = HhdmRequest::new();
 
 #[used]
 #[unsafe(link_section = ".requests_start_marker")]
@@ -79,13 +83,14 @@ fn panic(info: &PanicInfo) -> ! {
 #[allow(unreachable_code)]
 pub extern "C" fn kernel_init() {
     unsafe {
-        println!("booting estros...");
         mmu::init_mmu();
+        crate::uart::init(HHDM.response().expect("failed to get hhdm response").offset);
+        println!("booting estros...");
 
         mp_init().expect("multiprocessing failed to initialise");
 
-        let dtb = DTB.get_response().expect("failed to get dtb");
-        let dtb = Dtb::new(dtb.dtb_ptr() as *const u8).expect("failed to parse dtb");
+        let dtb = DTB.response().expect("failed to get dtb");
+        let dtb = Dtb::new(dtb.dtb_ptr as *const u8).expect("failed to parse dtb");
 
         println!("loading init...");
         let mut process = get_init();

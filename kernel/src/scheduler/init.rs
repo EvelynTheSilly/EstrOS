@@ -1,21 +1,18 @@
 use crate::scheduler::process::Process;
 use elf::ElfBytes;
 use elf::endian::AnyEndian;
-use limine::modules::InternalModule;
-use limine::request::ModuleRequest;
+use limine::module::INTERNAL_MODULE_REQUIRED;
+use limine::module::InternalModule;
+use limine::request::ModulesRequest;
 
 #[used]
 #[unsafe(link_section = ".requests")]
-static INIT: ModuleRequest =
-    ModuleRequest::new().with_internal_modules(&[&InternalModule::new().with_path(c"/init.elf")]);
+static INIT: ModulesRequest =
+    ModulesRequest::new_rev1(&[&InternalModule::new(c"/init.elf", c"", INTERNAL_MODULE_REQUIRED)]);
 
 pub fn get_init() -> Process {
-    let res = INIT.get_response().unwrap();
-    let init_bytes = res
-        .modules()
-        .iter()
-        .next()
-        .map(|file| unsafe { core::slice::from_raw_parts(file.addr(), file.size() as usize) });
+    let res = INIT.response().unwrap();
+    let init_bytes = res.modules().iter().next().map(|file| file.data());
 
     let init_bytes =
         init_bytes.expect("please provide an init file named init.elf in the boot directory");
