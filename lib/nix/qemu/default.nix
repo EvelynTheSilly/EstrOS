@@ -16,16 +16,40 @@
       releaseInit = self.lib.buildInit { init = inits.process_spawner.release; };
       debugInit = self.lib.buildInit { init = inits.process_spawner.debug; };
 
-      release = self.lib.qemu.buildDiskImage {
-        init = releaseInit;
-        kernel = self'.packages.kernel_elf;
-        inherit pkgs;
+      releaseKernel = self'.packages.kernel_elf;
+      debugKernel = self'.packages.kernel_elf_debug;
+
+      kernels = {
+        debug = debugKernel;
+        release = releaseKernel;
       };
-      debug = self.lib.qemu.buildDiskImage {
-        init = debugInit;
-        kernel = self'.packages.kernel_elf_debug;
-        inherit pkgs;
+      variantInits = {
+        debug = debugInit;
+        release = releaseInit;
       };
+
+      mkImage =
+        init: kernel:
+        self.lib.qemu.buildDiskImage {
+          inherit init kernel pkgs;
+        };
+
+      # Halts under gdb's control: -S freezes the guest, -s opens :1234.
+      mkGdbRun =
+        {
+          kernelVariant,
+          initVariant,
+          suffix,
+        }:
+        self.lib.qemu.buildScript {
+          inherit pkgs;
+          name = "estros-run-gdb${suffix}";
+          inherit (mkImage variantInits.${initVariant} kernels.${kernelVariant}) efiVars diskImage;
+          extraFlags = "-S -s";
+        };
+
+      release = mkImage releaseInit releaseKernel;
+      debug = mkImage debugInit debugKernel;
 
       run = self.lib.qemu.buildScript {
         inherit pkgs;
@@ -37,16 +61,32 @@
         name = "estros-run-debug";
         inherit (debug) efiVars diskImage;
       };
-      run-gdb = self.lib.qemu.buildScript {
-        inherit pkgs;
-        name = "estros-run-gdb";
-        inherit (debug) efiVars diskImage;
-        extraFlags = "-S -s";
+      run-gdb = mkGdbRun {
+        kernelVariant = "debug";
+        initVariant = "debug";
+        suffix = "";
+      };
+      run-gdb-kernel-release = mkGdbRun {
+        kernelVariant = "release";
+        initVariant = "debug";
+        suffix = "-kernel-release";
+      };
+      run-gdb-init-release = mkGdbRun {
+        kernelVariant = "debug";
+        initVariant = "release";
+        suffix = "-init-release";
+      };
+      run-gdb-release = mkGdbRun {
+        kernelVariant = "release";
+        initVariant = "release";
+        suffix = "-release";
       };
     in
     {
       packages = {
-        inherit run run-debug run-gdb;
+        inherit run run-debug run-gdb run-gdb-kernel-release run-gdb-init-release run-gdb-release;
+        init_debug = debugInit;
+        init_release = releaseInit;
         default = run;
 
         krun = pkgs.writeShellScriptBin "krun" ''
@@ -62,11 +102,20 @@
           exec nix run ".#$run_pkg" -- "''${args[@]}"
         '';
         kdebug = pkgs.writeShellScriptBin "kdebug" ''
-          nix build .#gdb
-          ${pkgs.alacritty}/bin/alacritty -e ./result/bin/gdb &
+          ${self.lib.variantArgs {}}
+
+          case "$kernel_variant-$init_variant" in
+            release-release) run_pkg=run-gdb-release ;;
+            release-debug) run_pkg=run-gdb-kernel-release ;;
+            debug-release) run_pkg=run-gdb-init-release ;;
+            *) run_pkg=run-gdb ;;
+          esac
+
+          gdb_path=$(nix build .#gdb --no-link --print-out-paths)
+          ${pkgs.alacritty}/bin/alacritty -e "$gdb_path/bin/gdb" "''${variant_flags[@]}" "''${variant_args[@]}" &
           gdb_pid=$!
           trap 'kill $gdb_pid 2>/dev/null' EXIT
-          exec nix run .#run-gdb -- "$@"
+          nix run ".#$run_pkg" -- "''${variant_args[@]}"
         '';
         kbacon = pkgs.writeShellScriptBin "kbacon" ''
           cd "$(git rev-parse --show-toplevel)/kernel"
@@ -74,15 +123,25 @@
         '';
       } // pkgs.lib.optionalAttrs isLinux {
         gdb = pkgs.writeShellScriptBin "gdb" ''
-          kernel_path=$(nix build .#kernel_elf_debug --no-link --print-out-paths)
-          init_path=$(nix build .#init_debug --no-link --print-out-paths)
+          ${self.lib.variantArgs {}}
+
+          if [[ "$kernel_variant" == release ]]; then
+            kernel_attr=kernel_elf
+          else
+            kernel_attr=kernel_elf_debug
+          fi
+
+          kernel_path=$(nix build ".#$kernel_attr" --no-link --print-out-paths)
+          init_path=$(nix build ".#init_$init_variant" --no-link --print-out-paths)
+          kernel_src="$PWD/kernel"
           tmpgdbinit=$(mktemp)
           trap 'rm -f "$tmpgdbinit"' EXIT
           sed \
             -e "s|KERNEL_ELF_PATH|$kernel_path/kernel.elf|g" \
             -e "s|INIT_ELF_PATH|$init_path/init.elf|g" \
+            -e "s|KERNEL_SRC_PATH|$kernel_src|g" \
             ${./gdbinit} > "$tmpgdbinit"
-          exec ${cross.buildPackages.gdb}/bin/aarch64-none-elf-gdb -ix "$tmpgdbinit" "$@"
+          exec ${cross.buildPackages.gdb}/bin/aarch64-none-elf-gdb -nx -ix "$tmpgdbinit" "''${variant_args[@]}"
         '';
       };
     };

@@ -31,6 +31,45 @@ let
       rust = rust';
     };
 
+  # Expands --release / --kernel-release / --init-release into kernel_variant
+  # and init_variant. The recognised flags are collected into variant_flags and
+  # everything else into variant_args, so a consumer can forward one without the
+  # other: kdebug hands variant_flags to the gdb wrapper and variant_args to
+  # qemu, while the wrapper keeps variant_flags to itself and hands only
+  # variant_args to real gdb. Sharing this keeps the booted image and the loaded
+  # symbols from ever disagreeing.
+  variantArgs =
+    {
+      defaultKernel ? "debug",
+      defaultInit ? "debug",
+    }:
+    ''
+      kernel_variant=${defaultKernel}
+      init_variant=${defaultInit}
+      variant_flags=()
+      variant_args=()
+      for arg in "$@"; do
+        case "$arg" in
+          --release)
+            kernel_variant=release
+            init_variant=release
+            variant_flags+=("$arg")
+            ;;
+          --kernel-release)
+            kernel_variant=release
+            variant_flags+=("$arg")
+            ;;
+          --init-release)
+            init_variant=release
+            variant_flags+=("$arg")
+            ;;
+          *)
+            variant_args+=("$arg")
+            ;;
+        esac
+      done
+    '';
+
   limineConf = ./qemu/limine.conf;
   bootloaderSettings = ./qemu/bootloader_settings.json;
 
@@ -163,7 +202,7 @@ in
     { ... }:
     {
       lib = {
-        inherit defineInit buildInit buildKernel;
+        inherit defineInit buildInit buildKernel variantArgs;
         qemu = {
           inherit buildDiskImage buildScript;
         };

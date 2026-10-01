@@ -13,6 +13,7 @@ define elr_disas
     disassemble $ELR_EL1
 end
 
+set substitute-path /build/source KERNEL_SRC_PATH
 symbol-file KERNEL_ELF_PATH
 add-symbol-file INIT_ELF_PATH
 b el1_sp0_sync
