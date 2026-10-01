@@ -35,6 +35,9 @@ impl SegmentAllocation {
         let allocation;
         unsafe {
             allocation = alloc::alloc::alloc(layout);
+            if allocation as usize == 0 {
+                panic!("awooga awooga null pointer eeeeeeeeee")
+            }
             match data {
                 Some(data) => {
                     copy_nonoverlapping(data.as_ptr(), allocation, data.len());
