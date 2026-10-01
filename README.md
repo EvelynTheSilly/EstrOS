@@ -19,7 +19,10 @@ krun --debug    # debug kernel + init
 
 debug with 
 ~~~sh
-kdebug          # debug kernel + init, halted, with gdb attached
+kdebug          # debug kernel + debug init, halted, with gdb attached
+kdebug --release # release kernel + release init, halted, with gdb attached
+kdebug --kernel-release # release kernel + debug init, halted, with gdb attached
+kdebug --init-release   # debug kernel + release init, halted, with gdb attached
 ~~~
 
 ## credits
