@@ -41,7 +41,7 @@ impl RoundRobinScheduler {
     fn next_pid(&mut self) -> Pid {
         let pid = self.running_pid;
         self.running_pid = self.running_pid + 1;
-        return pid;
+        pid
     }
 
     /// always returns the next index into the proccesses vector, bounded by its length
@@ -89,25 +89,26 @@ impl CpuScheduler for RoundRobinScheduler {
                 .expect("robin should be in bounds of processes");
             let start_thread_robin = meta.tid_robin;
             loop {
-                let Some(robin) = meta.get_next_robin() else {
+                let Some(thread_robin) = meta.get_next_robin() else {
                     break;
                 };
                 let thread = meta
                     .process
                     .threads
                     .iter()
-                    .nth(robin)
+                    .nth(thread_robin)
                     .expect("robin should be in TID bounds")
                     .1;
-                if thread.wait_state.is_none() {
+                let runnable = thread.wait_state.is_none();
+
+                if runnable {
                     return Ok(SchedulingResult::Thread {
                         pid: meta.pid,
-                        tid: robin as Tid,
+                        tid: thread_robin as Tid,
                         thread: thread.clone(),
                     });
                 }
-                if robin == start_thread_robin {
-                    // we have seen it all, and havent returned earlier with a process
+                if thread_robin == start_thread_robin {
                     break;
                 }
             }
@@ -124,7 +125,7 @@ impl CpuScheduler for RoundRobinScheduler {
             tid_robin: 0,
             process,
         });
-        Ok(pid)
+        pid
     }
     fn kill_process(&mut self, pid: Pid) -> Result<()> {
         let index = self
