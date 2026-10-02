@@ -85,7 +85,7 @@ pub extern "C" fn kernel_init() {
     unsafe {
         mmu::init_mmu();
         crate::uart::init(HHDM.response().expect("failed to get hhdm response").offset);
-        println!("booting estros...");
+        println!("booting estros... a");
 
         mp_init().expect("multiprocessing failed to initialise");
 

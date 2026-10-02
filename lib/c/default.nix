@@ -1,5 +1,6 @@
-{ pkgs, ... }:
+{ inputs, ... }:
 let
+  pkgs = inputs.nixpkgs.legacyPackages.x86_64-linux;
   cross = pkgs.pkgsCross.aarch64-embedded;
   sysroot = ./sysroot;
 
@@ -67,8 +68,17 @@ let
         EOF
       '';
 in
+
 {
-  packages.estros-gcc = estros-gcc;
-  packages.estros-libc = estros-libc;
-  packages.aarch64-estros-binutils = aarch64-estros-binutils;
+  imports = [ inputs.flake-parts.flakeModules.nixpkgs ];
+
+  perSystem =
+    {
+      ...
+    }:
+    {
+      packages.estros-gcc = estros-gcc;
+      packages.estros-libc = estros-libc;
+      packages.aarch64-estros-binutils = aarch64-estros-binutils;
+    };
 }

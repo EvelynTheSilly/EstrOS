@@ -11,6 +11,10 @@
     imports = [
       (inputs.import-tree ./lib/nix)
       (import ./lib/nix/_lib.nix)
+      (import ./lib/nix/qemu/_disk_image.nix)
+      (import ./lib/nix/qemu/_runners.nix)
+      (import ./user/_lib.nix)
+      (import ./lib/c/default.nix)
       (inputs.import-tree ./user)
     ];
   };

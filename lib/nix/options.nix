@@ -11,6 +11,12 @@
     description = "Named init definitions grouped by source";
   };
 
+  options.flake.lib = lib.mkOption {
+    type = lib.types.attrsOf lib.types.anything;
+    default = { };
+    description = "Library functions";
+  };
+
   config.systems = [
     "x86_64-linux"
     "aarch64-linux"

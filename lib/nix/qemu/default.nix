@@ -13,8 +13,9 @@
       cross = pkgs.pkgsCross.aarch64-embedded;
       isLinux = system != "aarch64-darwin";
       inits = self.estros.inits;
-      releaseInit = self.lib.buildInit { init = inits.process_spawner.release; };
-      debugInit = self.lib.buildInit { init = inits.process_spawner.debug; };
+      init = inits.c_hello_world;
+      releaseInit = self.lib.buildInit { init = init.release; };
+      debugInit = self.lib.buildInit { init = init.debug; };
 
       releaseKernel = self'.packages.kernel_elf;
       debugKernel = self'.packages.kernel_elf_debug;
