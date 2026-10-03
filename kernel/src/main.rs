@@ -82,46 +82,45 @@ fn panic(info: &PanicInfo) -> ! {
 #[unsafe(no_mangle)]
 #[allow(unreachable_code)]
 pub extern "C" fn kernel_init() {
-    unsafe {
-        mmu::init_mmu();
-        crate::uart::init(HHDM.response().expect("failed to get hhdm response").offset);
-        println!("booting estros... a");
+    mmu::init_mmu();
+    crate::uart::init(HHDM.response().expect("failed to get hhdm response").offset);
+    println!("booting estros... a");
 
-        mp_init().expect("multiprocessing failed to initialise");
+    mp_init().expect("multiprocessing failed to initialise");
 
-        let dtb = DTB.response().expect("failed to get dtb");
-        let dtb = Dtb::new(dtb.dtb_ptr as *const u8).expect("failed to parse dtb");
+    let dtb = DTB.response().expect("failed to get dtb");
+    let dtb = Dtb::new(dtb.dtb_ptr as *const u8).expect("failed to parse dtb");
 
-        println!("loading init...");
-        let mut process = get_init();
-        process.capabilities.populate_mem(&dtb);
-        PROCESS_MANAGER.lock(|manager| {
-            manager.launch_process(process);
-        });
-    };
+    println!("loading init...");
+    let mut process = get_init();
+    process.capabilities.populate_mem(&dtb);
+    PROCESS_MANAGER.lock(|manager| {
+        manager.launch_process(process);
+    });
 }
 
 extern "C" fn get_init_process(initial_thread_state: *mut State) {
+    let scheduling_ok = PROCESS_MANAGER.lock(|scheduler| scheduler.schedule().unwrap());
+    let (pid, tid, thread) = match scheduling_ok {
+        SchedulingResult::Wait => panic!("got wait for the first scheduling result"),
+        SchedulingResult::Thread { pid, tid, thread } => (pid, tid, thread),
+    };
+    let ttbr = PROCESS_MANAGER.lock(|scheduler| {
+        scheduler
+            .get_process_mut(pid)
+            .expect("failed to get init proccess")
+            .mem_manager
+            .activate_memory_map()
+    });
+    CPU_STATE_MANAGER.lock(|cpu_manager| {
+        let cpu = cpu_manager
+            .entry(get_cpu_id())
+            .or_insert(CpuPersistantState::new());
+        cpu.submit_pid_tid(pid, tid);
+        cpu.submit_ttbr(ttbr);
+    });
     unsafe {
-        let scheduling_ok = PROCESS_MANAGER.lock(|scheduler| scheduler.schedule().unwrap());
-        let (pid, tid, thread) = match scheduling_ok {
-            SchedulingResult::Wait => panic!("got wait for the first scheduling result"),
-            SchedulingResult::Thread { pid, tid, thread } => (pid, tid, thread),
-        };
-        let ttbr = PROCESS_MANAGER.lock(|scheduler| {
-            scheduler
-                .get_process_mut(pid)
-                .expect("failed to get init proccess")
-                .mem_manager
-                .activate_memory_map()
-        });
-        CPU_STATE_MANAGER.lock(|cpu_manager| {
-            let cpu = cpu_manager
-                .entry(get_cpu_id())
-                .or_insert(CpuPersistantState::new());
-            cpu.submit_pid_tid(pid, tid);
-            cpu.submit_ttbr(ttbr);
-        });
+        // SAFETY: we can trust the pointer handed to us by boot.rs due to it being guaranteed properly allocated
         *initial_thread_state = thread.state;
     }
     println!("loaded init");
