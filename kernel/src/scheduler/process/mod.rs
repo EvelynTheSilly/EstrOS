@@ -1,11 +1,8 @@
 use crate::scheduler::process::{
-    capabilities::CapStore,
-    mem_management::ProcessMemoryManager,
-    messages::{MessageChannelId, MessageStore},
+    capabilities::CapStore, mem_management::ProcessMemoryManager, messages::MessageRecieverStore,
     threads::ThreadStore,
 };
 use aarch64_paging::paging::{Constraints, MemoryRegion, PAGE_SIZE};
-use alloc::collections::BTreeMap;
 use elf::{ElfBytes, abi::PT_LOAD, endian::AnyEndian};
 use mem_management::allocations::{SegmentAllocation, elf_flags_to_mmu_constrains};
 use thiserror::Error;
@@ -35,7 +32,7 @@ pub struct Process {
     pub capabilities: CapStore,
     pub mem_manager: ProcessMemoryManager,
     pub threads: ThreadStore,
-    pub receiving_channels: BTreeMap<MessageChannelId, MessageStore>,
+    pub message_channel_store: MessageRecieverStore,
 }
 
 impl Process {
@@ -88,7 +85,7 @@ impl Process {
         threads.spawn(SchedulerThread::at(start_address));
 
         Ok(Process {
-            receiving_channels: BTreeMap::new(),
+            message_channel_store: MessageRecieverStore::default(),
             mem_manager,
             threads,
             capabilities: CapStore::default(),

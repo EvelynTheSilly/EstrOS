@@ -12,7 +12,7 @@
 use crate::{
     scheduler::{
         CpuScheduler, PROCESS_MANAGER,
-        process::{Pid, threads::Tid},
+        process::{Pid, capabilities::Capability::DeviceMemCapability, threads::Tid},
     },
     syncronisation::Mutex,
     syscall_assert,
@@ -34,10 +34,20 @@ pub fn map_device_memory(state: &mut State, pid: Pid, _tid: Tid) -> SyscallResul
 
         let Some(cap) = proc
             .capabilities
-            .dev_mem_caps
+            .caps
             .iter()
             .map(|pair| pair.1)
-            .find(|cap| cap.addr == paddr && cap.size == size)
+            .find_map(|cap| {
+                if let DeviceMemCapability(cap) = cap {
+                    if cap.addr == paddr && cap.size == size {
+                        Some(cap)
+                    } else {
+                        None
+                    }
+                } else {
+                    None
+                }
+            })
         else {
             return syscall_err(2);
         };

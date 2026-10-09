@@ -2,13 +2,19 @@ use alloc::{collections::BTreeMap, vec::Vec};
 use thiserror::Error;
 
 pub type Mid = u64;
-pub type MessageChannelId = u64;
+pub type MessageRecieverChannelId = u64;
 pub type Result<T> = core::result::Result<T, MessageError>;
 
 #[derive(Error, Debug)]
 pub enum MessageError {
     #[error("Invalid Mid")]
     InvalidMid,
+}
+
+#[derive(Default, Clone)]
+pub struct MessageRecieverStore {
+    rolling_id: MessageRecieverChannelId,
+    pub message_channels: BTreeMap<MessageRecieverChannelId, MessageStore>,
 }
 
 #[derive(Default, Clone)]
@@ -22,6 +28,19 @@ pub struct Message {
     pub waited_on: bool,
     data: Vec<u8>,
     read_pointer: usize,
+}
+
+impl MessageRecieverStore {
+    fn new_id(&mut self) -> MessageRecieverChannelId {
+        let id = self.rolling_id;
+        self.rolling_id += 1;
+        id
+    }
+    pub fn insert_reciever(&mut self, store: MessageStore) -> MessageRecieverChannelId {
+        let id = self.new_id();
+        self.message_channels.insert(id, store);
+        id
+    }
 }
 
 impl Message {

@@ -1,8 +1,7 @@
 /// interface:
-/// x0: pid
-/// x1: receiver id
-/// x2: pointer
-/// x3: len
+/// x0: cap id
+/// x1: pointer
+/// x2: len
 ///
 /// errors:
 /// 1: invalid target pid
@@ -14,7 +13,12 @@ use crate::{
     alloc::vec,
     scheduler::{
         CpuScheduler, PROCESS_MANAGER,
-        process::{Pid, messages::Message, threads::Tid, threads::wait_conditions::WaitState},
+        process::{
+            Pid,
+            capabilities::{CapID, Capability::RecieverCapability},
+            messages::Message,
+            threads::{Tid, wait_conditions::WaitState},
+        },
     },
     syncronisation::Mutex,
     syscalls::{SyscallResult, syscall_err},
@@ -23,13 +27,29 @@ use crate::{
 
 pub fn send_message_to_receiver(state: &mut State, pid: Pid, _tid: Tid) -> SyscallResult {
     PROCESS_MANAGER.lock(|process_manager| {
-        let target_pid: Pid = state.x[0];
-        let receiver_id = state.x[1];
-        let pointer = state.x[2] as usize;
-        let len = state.x[3] as usize;
+        let cap_id = state.x[0] as CapID;
+        let pointer = state.x[1] as usize;
+        let len = state.x[2] as usize;
 
         // get own proc
         let proc = process_manager.get_process_mut(pid).ok()?;
+
+        let cap = proc
+            .capabilities
+            .caps
+            .get(&cap_id)
+            .iter()
+            .filter_map(|cap| {
+                let RecieverCapability(cap) = cap else {
+                    return None;
+                };
+                Some(cap)
+            })
+            .next()
+            .unwrap();
+
+        let target_pid: Pid = cap.proc;
+        let receiver_id = cap.reciever_id;
 
         // read bytes from own process memory
         let mut message_data = vec![0 as u8; len];
@@ -44,7 +64,11 @@ pub fn send_message_to_receiver(state: &mut State, pid: Pid, _tid: Tid) -> Sysca
 
         // send message to target proc
         let mid;
-        if let Some(store) = target_proc.receiving_channels.get_mut(&receiver_id) {
+        if let Some(store) = target_proc
+            .message_channel_store
+            .message_channels
+            .get_mut(&receiver_id)
+        {
             mid = store.push_message(Message::new(message_data));
         } else {
             return syscall_err(2);

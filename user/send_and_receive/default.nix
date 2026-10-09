@@ -1,29 +1,32 @@
-{ self, inputs, ... }:
 {
-  imports = [ inputs.flake-parts.flakeModules.nixpkgs ];
+  self,
+  inputs,
+  ...
+}: {
+  imports = [inputs.flake-parts.flakeModules.nixpkgs];
 
-  flake =
-    { ... }:
-    {
-      estros.inits.send = {
-        release = {
-          name = "send";
-          pkg = self.lib.singleFileInitBuild "send" "release" ./. "send.c";
-        };
-        debug = {
-          name = "send";
-          pkg = self.lib.singleFileInitBuild "send" "debug" ./. "send.c";
+  flake = {...}: {
+    estros.inits.send_recieve = {
+      release = {
+        name = "send_recieve";
+        pkg = self.lib.multiFileInitBuild {
+          name = "send_recieve";
+          buildType = "release";
+          src = ./.;
+          initName = "receive.c";
+          cFiles = [ { file = "send.c"; sym = "send_process_elf"; } ];
         };
       };
-      estros.inits.receive = {
-        release = {
-          name = "receive";
-          pkg = self.lib.singleFileInitBuild "receive" "release" ./. "receive.c";
-        };
-        debug = {
-          name = "receive";
-          pkg = self.lib.singleFileInitBuild "receive" "debug" ./. "receive.c";
+      debug = {
+        name = "send_recieve";
+        pkg = self.lib.multiFileInitBuild {
+          name = "send_recieve";
+          buildType = "debug";
+          src = ./.;
+          initName = "receive.c";
+          cFiles = [ { file = "send.c"; sym = "send_process_elf"; } ];
         };
       };
     };
+  };
 }

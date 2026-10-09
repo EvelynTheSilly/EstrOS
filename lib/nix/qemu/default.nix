@@ -13,7 +13,7 @@
       cross = pkgs.pkgsCross.aarch64-embedded;
       isLinux = system != "aarch64-darwin";
       inits = self.estros.inits;
-      init = inits.c_hello_world;
+      init = inits.send_recieve;
       releaseInit = self.lib.buildInit { init = init.release; };
       debugInit = self.lib.buildInit { init = init.debug; };
 

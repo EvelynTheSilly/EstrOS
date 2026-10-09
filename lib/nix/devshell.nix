@@ -11,7 +11,6 @@
       ...
     }:
     let
-      cc = (import ../c { inherit pkgs; });
       cross = pkgs.pkgsCross.aarch64-embedded;
       rust = self'.packages.rust;
       isLinux = system != "aarch64-darwin";
@@ -36,7 +35,7 @@
           ]
           ++ pkgs.lib.optionals isLinux [
             cross.buildPackages.gcc
-            cc.packages.aarch64-estros-binutils
+            self'.packages.aarch64-estros-binutils
             self'.packages.gdb
             pkgs.mtools
             pkgs.pkgsCross.aarch64-multiplatform.OVMF.fd

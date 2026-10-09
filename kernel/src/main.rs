@@ -25,7 +25,10 @@ use crate::{
     dtb::Dtb,
     mem::mmu,
     multiprocessor::mp_init,
-    scheduler::{CpuScheduler, PROCESS_MANAGER, SchedulingResult, init::get_init},
+    scheduler::{
+        CpuScheduler, PROCESS_MANAGER, SchedulingResult, init::get_init,
+        process::capabilities::Capability,
+    },
     syncronisation::Mutex,
     vectors::cpu_state::State,
 };
@@ -85,6 +88,12 @@ pub extern "C" fn kernel_init() {
     mmu::init_mmu();
     crate::uart::init(HHDM.response().expect("failed to get hhdm response").offset);
     println!("booting estros... a");
+
+    let bytes = [1u64, 0u64, 0u64]
+        .iter()
+        .flat_map(|item| item.to_le_bytes())
+        .collect();
+    let cap = Capability::from_bytes(bytes);
 
     mp_init().expect("multiprocessing failed to initialise");
 

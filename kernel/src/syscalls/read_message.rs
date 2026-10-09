@@ -1,11 +1,11 @@
 /// interface:
-/// x0: receiver id
+/// x0: cap_id
 /// x1: mid
 /// x2: pointer
 /// x3: len
 ///
 /// errors:
-/// 1: invalid receiver id
+/// 1: invalid cap
 /// 2: invalid mid
 /// 3: memory write fail
 ///
@@ -14,7 +14,7 @@
 use crate::{
     scheduler::{
         CpuScheduler, PROCESS_MANAGER,
-        process::{Pid, threads::Tid},
+        process::{Pid, capabilities::Capability::RecieverCapability, threads::Tid},
     },
     syncronisation::Mutex,
     syscalls::{SyscallResult, syscall_err},
@@ -22,7 +22,7 @@ use crate::{
 };
 
 pub fn read_message(state: &mut State, pid: Pid, _tid: Tid) -> SyscallResult {
-    let receiver_id = state.x[0];
+    let cap_id = state.x[0];
     let mid = state.x[1];
     let process_pointer = state.x[2];
     let len = state.x[3];
@@ -30,7 +30,26 @@ pub fn read_message(state: &mut State, pid: Pid, _tid: Tid) -> SyscallResult {
         let Ok(process) = manager.get_process_mut(pid) else {
             return None;
         };
-        let Some(channel) = process.receiving_channels.get_mut(&receiver_id) else {
+
+        let Some(capability) = process.capabilities.caps.get(&cap_id) else {
+            return syscall_err(1);
+        };
+
+        let channel_id = {
+            let RecieverCapability(cap) = capability else {
+                return syscall_err(1);
+            };
+            if cap.proc != pid {
+                return syscall_err(1);
+            }
+            cap.reciever_id
+        };
+
+        let Some(channel) = process
+            .message_channel_store
+            .message_channels
+            .get_mut(&channel_id)
+        else {
             return syscall_err(1);
         };
         let Ok(buff) = channel.read_message(mid, len as usize) else {
