@@ -1,10 +1,11 @@
 use crate::{
-    dtb::Dtb, println, scheduler::process::capabilities::{
+    dtb::Dtb,
+    scheduler::process::capabilities::{
         device_memory_capability::DeviceMemCap,
         message_reciever_capability::ProcessMessageCapability,
     },
 };
-use alloc::{collections::BTreeMap};
+use alloc::collections::BTreeMap;
 
 pub mod device_memory_capability;
 pub mod message_reciever_capability;
@@ -14,14 +15,6 @@ pub enum Capability {
     DeviceMemCapability(DeviceMemCap),
     /// rights to a proccesses reciever channel
     RecieverCapability(ProcessMessageCapability),
-}
-
-impl Capability {
-    pub fn from_bytes(bytes: [u8; 24]) -> Self {
-        let type = u64::from_be_bytes(bytes[0..8])
-        println!("DEBUG: type {}", type);
-        todo!()
-    }
 }
 
 pub type CapID = u64;
