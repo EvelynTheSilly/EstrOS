@@ -1,4 +1,4 @@
 #include "syscalls.h"
 #include <syscall_macros.h>
 
-SYSCALL2(uint64_t, sys_spawn_process, 13, const void *, location, uint64_t, len);
+SYSCALL4(uint64_t, sys_spawn_process, 13, const void *, bin, uint64_t, bin_len, const void *, caps, uint64_t, caps_len);

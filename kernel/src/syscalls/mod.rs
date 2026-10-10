@@ -1,15 +1,17 @@
 use crate::{
     scheduler::process::{Pid, threads::Tid},
     syscalls::{
-        exit::exit, kill_thread::kill_thread, map_device_memory::map_device_memory,
-        read_message::read_message, send_message_to_receiver::send_message_to_receiver,
-        spawn_capability::spawn_capability, spawn_process::spawn_process,
-        spawn_thread::spawn_thread, wait_on_message_from_receiver::wait_on_message_from_receiver,
+        cap_duplicate::cap_duplicate, exit::exit, kill_thread::kill_thread,
+        map_device_memory::map_device_memory, read_message::read_message,
+        send_message_to_receiver::send_message_to_receiver, spawn_capability::spawn_capability,
+        spawn_process::spawn_process, spawn_thread::spawn_thread,
+        wait_on_message_from_receiver::wait_on_message_from_receiver,
         wait_on_thread::wait_on_thread, write_to_uart::write_to_uart,
     },
     vectors::cpu_state::State,
 };
 use thiserror::Error;
+mod cap_duplicate;
 mod exit;
 mod kill_thread;
 mod map_device_memory;
@@ -37,6 +39,7 @@ const SYSCALLS: &[fn(&mut State, Pid, Tid) -> SyscallResult] = &[
     send_message_to_receiver,
     map_device_memory,
     spawn_process,
+    cap_duplicate,
 ];
 
 pub fn handle_syscall(state: &mut State, iss: u64, pid: Pid, tid: Tid) {
@@ -74,8 +77,8 @@ pub struct SyscallError {
     code: u64,
 }
 
-fn syscall_err(code: u64) -> SyscallResult {
-    Some(Err(SyscallError { code }))
+fn syscall_err(code: i64) -> SyscallResult {
+    Some(Err(SyscallError { code: code as u64 }))
 }
 
 #[macro_export]

@@ -10,6 +10,7 @@ use alloc::collections::BTreeMap;
 pub mod device_memory_capability;
 pub mod message_reciever_capability;
 
+#[derive(Clone)]
 pub enum Capability {
     /// rights to the memory region associated with some device
     DeviceMemCapability(DeviceMemCap),

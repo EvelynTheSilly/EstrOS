@@ -17,7 +17,8 @@
  *  10: wait_on_message_from_receiver(x0=cap_id) -> mid
  *  11: send_message_to_receiver(x0=cap_id, x1=ptr, x2=len) -> 0
  *  12: sys_map_device_memory(x0=vaddr, x1=paddr, x2=size) -> 0
- *  13: spawn_process(x0=elf_ptr, x1=elf_len) -> pid
+ *  13: spawn_process(x0=elf_ptr, x1=elf_len, x2=cap_ptr, x3=cap_len) -> pid
+ *  14: cap_duplicate(x0=cap_id) -> new_cap_id
  * See kernel/src/syscalls/mod.rs for the authoritative list.
 
  * Errors are returned as non-zero codes in x0 (see kernel syscall docs).
@@ -45,6 +46,7 @@ uint64_t sys_spawn_capability(uint64_t kind);
 uint64_t sys_wait_on_message_from_receiver(uint64_t cap_id);
 uint64_t sys_send_message_to_receiver(uint64_t cap_id, const void *buf, size_t len);
 uint64_t sys_map_device_memory(void* vaddr, uint64_t paddr, uint64_t size);
-uint64_t sys_spawn_process(const void *location, uint64_t len);
+uint64_t sys_spawn_process(const void *bin, uint64_t bin_len, const void *caps, uint64_t caps_len);
+uint64_t sys_cap_duplicate(uint64_t cap_id);
 
 #endif /* SYSCALLS_H */

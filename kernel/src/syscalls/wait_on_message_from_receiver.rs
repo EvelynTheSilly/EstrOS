@@ -27,6 +27,7 @@ pub fn wait_on_message_from_receiver(state: &mut State, pid: Pid, tid: Tid) -> S
         let reciever_id = {
             let capability = proc.capabilities.caps.get(&cap_id).unwrap();
             let RecieverCapability(cap) = capability else {
+                // TODO: undocumented errors. non negative codes
                 return syscall_err(1);
             };
             if cap.proc != pid {
@@ -39,7 +40,7 @@ pub fn wait_on_message_from_receiver(state: &mut State, pid: Pid, tid: Tid) -> S
             .message_channels
             .get_mut(&reciever_id)
         else {
-            return syscall_err((-1 as i64) as u64);
+            return syscall_err(-1);
         };
 
         if let Some(mid) = channel.get_unwaited_message() {
