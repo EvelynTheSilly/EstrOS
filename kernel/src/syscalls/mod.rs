@@ -2,10 +2,10 @@ use crate::{
     scheduler::process::{Pid, threads::Tid},
     syscalls::{
         cap_duplicate::cap_duplicate, exit::exit, kill_thread::kill_thread,
-        map_device_memory::map_device_memory, read_message::read_message,
-        send_message_to_receiver::send_message_to_receiver, spawn_capability::spawn_capability,
-        spawn_process::spawn_process, spawn_thread::spawn_thread,
-        wait_on_message_from_receiver::wait_on_message_from_receiver,
+        lookup_mem_cap::lookup_mem_cap, map_device_memory::map_device_memory,
+        read_message::read_message, send_message_to_receiver::send_message_to_receiver,
+        spawn_capability::spawn_capability, spawn_process::spawn_process,
+        spawn_thread::spawn_thread, wait_on_message_from_receiver::wait_on_message_from_receiver,
         wait_on_thread::wait_on_thread, write_to_uart::write_to_uart,
     },
     vectors::cpu_state::State,
@@ -14,6 +14,7 @@ use thiserror::Error;
 mod cap_duplicate;
 mod exit;
 mod kill_thread;
+mod lookup_mem_cap;
 mod map_device_memory;
 mod read_message;
 mod send_message_to_receiver;
@@ -40,6 +41,7 @@ const SYSCALLS: &[fn(&mut State, Pid, Tid) -> SyscallResult] = &[
     map_device_memory,
     spawn_process,
     cap_duplicate,
+    lookup_mem_cap,
 ];
 
 pub fn handle_syscall(state: &mut State, iss: u64, pid: Pid, tid: Tid) {

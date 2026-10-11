@@ -11,7 +11,8 @@ void puts_userspace(char* message) {
 }
 
 int main(){
-    putc(sys_map_device_memory((void*) 0x670000, 0x9000000, 4096)+'0');
+    uint64_t cap = sys_lookup_mem_cap(0x9000000, 4096);
+    putc(sys_map_device_memory((void*) 0x670000, cap)+'0');
     putc('\n');
     puts_userspace("hello there\n");
     puts_userspace("im printing in userspace\n");

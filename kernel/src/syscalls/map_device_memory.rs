@@ -1,7 +1,6 @@
 /// interface:
 /// x0: vaddr
-/// x1: phys addr
-/// x2: size
+/// x1: cap
 ///
 /// errors:
 /// 1: unaligned vaddr
@@ -23,8 +22,7 @@ use crate::{
 pub fn map_device_memory(state: &mut State, pid: Pid, _tid: Tid) -> SyscallResult {
     PROCESS_MANAGER.lock(|scheduler| {
         let vaddr = state.x[0] as usize;
-        let paddr = state.x[1] as usize;
-        let size = state.x[2] as usize;
+        let cap_id = state.x[1];
 
         let Ok(proc) = scheduler.get_process_mut(pid) else {
             return None;
@@ -32,23 +30,10 @@ pub fn map_device_memory(state: &mut State, pid: Pid, _tid: Tid) -> SyscallResul
 
         syscall_assert!(vaddr % 4096 == 0, 1);
 
-        let Some(cap) = proc
-            .capabilities
-            .caps
-            .iter()
-            .map(|pair| pair.1)
-            .find_map(|cap| {
-                if let DeviceMemCapability(cap) = cap {
-                    if cap.addr == paddr && cap.size == size {
-                        Some(cap)
-                    } else {
-                        None
-                    }
-                } else {
-                    None
-                }
-            })
-        else {
+        let Some(cap) = proc.capabilities.caps.get(&cap_id) else {
+            return syscall_err(2);
+        };
+        let DeviceMemCapability(cap) = cap else {
             return syscall_err(2);
         };
 
