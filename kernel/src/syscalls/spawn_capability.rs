@@ -3,7 +3,7 @@
 ///  - CONST 1 = stream
 ///  - CONST 2 = message
 /// errors:
-/// 1: invalid cap kind
+/// -1: invalid cap kind
 ///
 /// returns: CapID
 use crate::{
@@ -41,7 +41,7 @@ pub fn spawn_capability(state: &mut State, pid: Pid, _tid: Tid) -> SyscallResult
                 });
                 proc.capabilities.insert_capability(cap)
             }
-            _ => return syscall_err(1),
+            _ => return syscall_err(-1),
         };
 
         Some(Ok(capid))
