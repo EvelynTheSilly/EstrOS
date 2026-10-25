@@ -80,7 +80,6 @@ fn panic(info: &PanicInfo) -> ! {
 }
 
 #[unsafe(no_mangle)]
-#[allow(unreachable_code)]
 pub extern "C" fn kernel_init() {
     mmu::init_mmu();
     crate::uart::init(HHDM.response().expect("failed to get hhdm response").offset);
