@@ -15,11 +15,12 @@
  *   8: wait_on_thread(x0=tid) -> 0
  *   9: spawn_capability(x0=kind) -> cap_id
  *  10: wait_on_message_from_receiver(x0=cap_id) -> mid
- *  11: send_message_to_receiver(x0=cap_id, x1=ptr, x2=len) -> 0
+ *  11: send_message_to_receiver(x0=cap_id, x1=ptr, x2=len, x3=cap_ptr, x4=cap_len) -> 0
  *  12: map_device_memory(x0=vaddr, x1=cap_id) -> 0
  *  13: spawn_process(x0=elf_ptr, x1=elf_len, x2=cap_ptr, x3=cap_len) -> pid
  *  14: cap_duplicate(x0=cap_id) -> new_cap_id
  *  15: lookup_mem_cap(x0=addr, x1=size) -> cap_id
+ *  16: read_message_caps(x0=cap_id, x1=mid, x2=ptr, x3=len) -> caps read
  * See kernel/src/syscalls/mod.rs for the authoritative list.
 
  * Errors are returned as non-zero codes in x0 (see kernel syscall docs).
@@ -45,10 +46,11 @@ uint64_t sys_kill_thread(uint64_t tid);
 uint64_t sys_wait_on_thread(uint64_t tid);
 uint64_t sys_spawn_capability(uint64_t kind);
 uint64_t sys_wait_on_message_from_receiver(uint64_t cap_id);
-uint64_t sys_send_message_to_receiver(uint64_t cap_id, const void *buf, size_t len);
+uint64_t sys_send_message_to_receiver(uint64_t cap_id, const void *buf, size_t len, const void *caps, uint64_t caps_len);
 uint64_t sys_map_device_memory(void* vaddr, uint64_t cap_id);
 uint64_t sys_spawn_process(const void *bin, uint64_t bin_len, const void *caps, uint64_t caps_len);
 uint64_t sys_cap_duplicate(uint64_t cap_id);
 uint64_t sys_lookup_mem_cap(uint64_t addr, uint64_t size);
+int sys_read_message_caps(uint64_t cap_id, uint64_t mid, void *buf, size_t len);
 
 #endif /* SYSCALLS_H */

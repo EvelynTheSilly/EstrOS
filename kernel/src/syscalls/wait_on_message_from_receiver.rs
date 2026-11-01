@@ -51,7 +51,7 @@ pub fn wait_on_message_from_receiver(state: &mut State, pid: Pid, tid: Tid) -> S
             return Some(Ok(mid));
         } else {
             let thread = proc.threads.get_mut(tid).ok()?;
-            thread.wait_state = WaitState::MessageWait(cap_id);
+            thread.wait_state = WaitState::MessageWait(reciever_id);
             return None;
         };
     })

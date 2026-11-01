@@ -3,9 +3,10 @@ use crate::{
     syscalls::{
         cap_duplicate::cap_duplicate, exit::exit, kill_thread::kill_thread,
         lookup_mem_cap::lookup_mem_cap, map_device_memory::map_device_memory,
-        read_message::read_message, send_message_to_receiver::send_message_to_receiver,
-        spawn_capability::spawn_capability, spawn_process::spawn_process,
-        spawn_thread::spawn_thread, wait_on_message_from_receiver::wait_on_message_from_receiver,
+        read_message_caps::read_message_caps, read_message_data::read_message_data,
+        send_message_to_receiver::send_message_to_receiver, spawn_capability::spawn_capability,
+        spawn_process::spawn_process, spawn_thread::spawn_thread,
+        wait_on_message_from_receiver::wait_on_message_from_receiver,
         wait_on_thread::wait_on_thread, write_to_uart::write_to_uart,
     },
     vectors::cpu_state::State,
@@ -16,7 +17,8 @@ mod exit;
 mod kill_thread;
 mod lookup_mem_cap;
 mod map_device_memory;
-mod read_message;
+mod read_message_caps;
+mod read_message_data;
 mod send_message_to_receiver;
 mod spawn_capability;
 mod spawn_process;
@@ -29,7 +31,7 @@ const SYSCALLS: &[fn(&mut State, Pid, Tid) -> SyscallResult] = &[
     |_, _, _| None, // noop
     write_to_uart,
     exit,
-    read_message,
+    read_message_data,
     |_, pid, _| Some(Ok(pid)), // get_pid
     |_, _, tid| Some(Ok(tid)), // get_tid
     spawn_thread,
@@ -42,6 +44,7 @@ const SYSCALLS: &[fn(&mut State, Pid, Tid) -> SyscallResult] = &[
     spawn_process,
     cap_duplicate,
     lookup_mem_cap,
+    read_message_caps,
 ];
 
 pub fn handle_syscall(state: &mut State, iss: u64, pid: Pid, tid: Tid) {

@@ -21,7 +21,7 @@ use crate::{
     vectors::cpu_state::State,
 };
 
-pub fn read_message(state: &mut State, pid: Pid, _tid: Tid) -> SyscallResult {
+pub fn read_message_data(state: &mut State, pid: Pid, _tid: Tid) -> SyscallResult {
     let cap_id = state.x[0];
     let mid = state.x[1];
     let process_pointer = state.x[2];
@@ -52,7 +52,7 @@ pub fn read_message(state: &mut State, pid: Pid, _tid: Tid) -> SyscallResult {
         else {
             return syscall_err(1);
         };
-        let Ok(buff) = channel.read_message(mid, len as usize) else {
+        let Ok(buff) = channel.read_message_data(mid, len as usize) else {
             return syscall_err(2);
         };
         let read = buff.len() as u64;
