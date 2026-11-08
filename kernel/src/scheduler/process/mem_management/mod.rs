@@ -8,10 +8,11 @@ use crate::{
 use aarch64_paging::{
     MapError, Mapping,
     descriptor::Attributes,
-    paging::{Constraints, MemoryRegion},
+    paging::{Constraints, MemoryRegion, PAGE_SIZE},
 };
 use alloc::vec::Vec;
 use core::arch::asm;
+use thiserror::Error;
 
 pub mod allocations;
 mod read_write_compare;
@@ -19,6 +20,14 @@ mod read_write_compare;
 pub struct ProcessMemoryManager {
     memory_map: Mapping<EstrTranslation>,
     memory_allocations: Vec<SegmentAllocation>,
+}
+
+#[derive(Error, Debug)]
+pub enum MapPageError {
+    #[error("virtual address {0:#x} is not page aligned")]
+    VaNotPageAligned(usize),
+    #[error("paging failed: {0}")]
+    MapError(#[from] MapError),
 }
 
 impl Default for ProcessMemoryManager {
@@ -66,6 +75,26 @@ impl ProcessMemoryManager {
             flags,
             constraints,
         )
+    }
+    /// Allocates one zeroed page on the kernel heap and maps it at `va`.
+    /// Only fails on an unaligned `va` or a paging error.
+    pub fn map_page(&mut self, va: usize, flags: Attributes) -> Result<(), MapPageError> {
+        if va % PAGE_SIZE != 0 {
+            return Err(MapPageError::VaNotPageAligned(va));
+        }
+        let segment = self.memory_allocations.push_mut(
+            SegmentAllocation::new(None, PAGE_SIZE, PAGE_SIZE)
+                .expect("zeroed page allocation failed"),
+        );
+        self.memory_map.map_range(
+            &MemoryRegion::new(va, va + PAGE_SIZE),
+            aarch64_paging::descriptor::PhysicalAddress(
+                kernel_virtual_to_physical(segment.as_ptr()) as usize,
+            ),
+            flags,
+            Constraints::empty(),
+        )?;
+        Ok(())
     }
     pub fn map_device(&mut self, va: usize, device: &DeviceMemCap) -> Result<(), MapError> {
         let flags = Attributes::PXN
