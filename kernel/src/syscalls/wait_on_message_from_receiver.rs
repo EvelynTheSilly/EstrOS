@@ -2,7 +2,7 @@
 /// x0: cap_id
 ///  
 /// errors:
-/// -1: target doesnt exist
+/// -1: invalid target
 ///
 /// returns: mid
 use crate::{
@@ -27,11 +27,10 @@ pub fn wait_on_message_from_receiver(state: &mut State, pid: Pid, tid: Tid) -> S
         let reciever_id = {
             let capability = proc.capabilities.caps.get(&cap_id).unwrap();
             let RecieverCapability(cap) = capability else {
-                // TODO: undocumented errors. non negative codes
-                return syscall_err(1);
+                return syscall_err(-1);
             };
             if cap.proc != pid {
-                return syscall_err(1);
+                return syscall_err(-1);
             }
             cap.reciever_id
         };
