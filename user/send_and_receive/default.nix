@@ -14,7 +14,12 @@
           buildType = "release";
           src = ./.;
           initName = "receive.c";
-          cFiles = [ { file = "send.c"; sym = "send_process_elf"; } ];
+          cFiles = [
+            {
+              file = "send.c";
+              sym = "send_process_elf";
+            }
+          ];
         };
       };
       debug = {
@@ -24,7 +29,12 @@
           buildType = "debug";
           src = ./.;
           initName = "receive.c";
-          cFiles = [ { file = "send.c"; sym = "send_process_elf"; } ];
+          cFiles = [
+            {
+              file = "send.c";
+              sym = "send_process_elf";
+            }
+          ];
         };
       };
     };

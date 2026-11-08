@@ -3,25 +3,28 @@
   pkgs,
   rust,
   buildType ? "release",
-}:
-
-let
+}: let
   cross = pkgs.pkgsCross.aarch64-embedded;
   isRelease = buildType == "release";
 
   src = pkgs.lib.cleanSourceWith {
     src = ./.;
-    filter = path: type:
-      let
-        name = builtins.baseNameOf (builtins.toString path);
-      in
+    filter = path: type: let
+      name = builtins.baseNameOf (builtins.toString path);
+    in
       craneLib.filterCargoSources path type
       || name == "aarch64-none-custom.json"
       || name == "linker.ld";
   };
 
-  cargoProfileDir = if isRelease then "release" else "debug";
-  profileArg = if isRelease then "--release" else "--profile dev";
+  cargoProfileDir =
+    if isRelease
+    then "release"
+    else "debug";
+  profileArg =
+    if isRelease
+    then "--release"
+    else "--profile dev";
 
   commonArgs = {
     inherit src;
@@ -52,17 +55,19 @@ let
     '';
   };
 
-  cargoArtifacts = craneLib.buildDepsOnly (commonArgs // {
-    pname = "estros-kernel-deps";
-  });
+  cargoArtifacts = craneLib.buildDepsOnly (commonArgs
+    // {
+      pname = "estros-kernel-deps";
+    });
 
-  kernel = craneLib.buildPackage (commonArgs // {
-    inherit cargoArtifacts;
+  kernel = craneLib.buildPackage (commonArgs
+    // {
+      inherit cargoArtifacts;
 
-    installPhaseCommand = ''
-      mkdir -p $out
-      cp target/aarch64-none-custom/${cargoProfileDir}/kernel $out/kernel.elf
-    '';
-  });
+      installPhaseCommand = ''
+        mkdir -p $out
+        cp target/aarch64-none-custom/${cargoProfileDir}/kernel $out/kernel.elf
+      '';
+    });
 in
-kernel
+  kernel
