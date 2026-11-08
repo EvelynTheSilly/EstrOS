@@ -1,7 +1,4 @@
-{
-  inputs,
-  ...
-}: let
+{inputs, ...}: let
   pkgs = inputs.nixpkgs.legacyPackages.x86_64-linux;
 
   pkg = pkgs.runCommand "binary" {} ''

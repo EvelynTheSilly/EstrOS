@@ -1,90 +1,89 @@
-{ inputs, self, ... }:
 {
-  imports = [ inputs.flake-parts.flakeModules.nixpkgs ];
+  inputs,
+  self,
+  ...
+}: {
+  imports = [inputs.flake-parts.flakeModules.nixpkgs];
 
-  perSystem =
-    {
-      self',
-      pkgs,
-      system,
-      ...
+  perSystem = {
+    self',
+    pkgs,
+    system,
+    ...
+  }: let
+    cross = pkgs.pkgsCross.aarch64-embedded;
+    isLinux = system != "aarch64-darwin";
+    inits = self.estros.inits;
+    init = inits.binary;
+    releaseInit = self.lib.buildInit {init = init.release;};
+    debugInit = self.lib.buildInit {init = init.debug;};
+
+    releaseKernel = self'.packages.kernel_elf;
+    debugKernel = self'.packages.kernel_elf_debug;
+
+    kernels = {
+      debug = debugKernel;
+      release = releaseKernel;
+    };
+    variantInits = {
+      debug = debugInit;
+      release = releaseInit;
+    };
+
+    mkImage = init: kernel:
+      self.lib.qemu.buildDiskImage {
+        inherit init kernel pkgs;
+      };
+
+    # Halts under gdb's control: -S freezes the guest, -s opens :1234.
+    mkGdbRun = {
+      kernelVariant,
+      initVariant,
+      suffix,
     }:
-    let
-      cross = pkgs.pkgsCross.aarch64-embedded;
-      isLinux = system != "aarch64-darwin";
-      inits = self.estros.inits;
-      init = inits.send_recieve;
-      releaseInit = self.lib.buildInit { init = init.release; };
-      debugInit = self.lib.buildInit { init = init.debug; };
-
-      releaseKernel = self'.packages.kernel_elf;
-      debugKernel = self'.packages.kernel_elf_debug;
-
-      kernels = {
-        debug = debugKernel;
-        release = releaseKernel;
-      };
-      variantInits = {
-        debug = debugInit;
-        release = releaseInit;
-      };
-
-      mkImage =
-        init: kernel:
-        self.lib.qemu.buildDiskImage {
-          inherit init kernel pkgs;
-        };
-
-      # Halts under gdb's control: -S freezes the guest, -s opens :1234.
-      mkGdbRun =
-        {
-          kernelVariant,
-          initVariant,
-          suffix,
-        }:
-        self.lib.qemu.buildScript {
-          inherit pkgs;
-          name = "estros-run-gdb${suffix}";
-          inherit (mkImage variantInits.${initVariant} kernels.${kernelVariant}) efiVars diskImage;
-          extraFlags = "-S -s";
-        };
-
-      release = mkImage releaseInit releaseKernel;
-      debug = mkImage debugInit debugKernel;
-
-      run = self.lib.qemu.buildScript {
+      self.lib.qemu.buildScript {
         inherit pkgs;
-        name = "estros-run";
-        inherit (release) efiVars diskImage;
+        name = "estros-run-gdb${suffix}";
+        inherit (mkImage variantInits.${initVariant} kernels.${kernelVariant}) efiVars diskImage;
+        extraFlags = "-S -s";
       };
-      run-debug = self.lib.qemu.buildScript {
-        inherit pkgs;
-        name = "estros-run-debug";
-        inherit (debug) efiVars diskImage;
-      };
-      run-gdb = mkGdbRun {
-        kernelVariant = "debug";
-        initVariant = "debug";
-        suffix = "";
-      };
-      run-gdb-kernel-release = mkGdbRun {
-        kernelVariant = "release";
-        initVariant = "debug";
-        suffix = "-kernel-release";
-      };
-      run-gdb-init-release = mkGdbRun {
-        kernelVariant = "debug";
-        initVariant = "release";
-        suffix = "-init-release";
-      };
-      run-gdb-release = mkGdbRun {
-        kernelVariant = "release";
-        initVariant = "release";
-        suffix = "-release";
-      };
-    in
-    {
-      packages = {
+
+    release = mkImage releaseInit releaseKernel;
+    debug = mkImage debugInit debugKernel;
+
+    run = self.lib.qemu.buildScript {
+      inherit pkgs;
+      name = "estros-run";
+      inherit (release) efiVars diskImage;
+    };
+    run-debug = self.lib.qemu.buildScript {
+      inherit pkgs;
+      name = "estros-run-debug";
+      inherit (debug) efiVars diskImage;
+    };
+    run-gdb = mkGdbRun {
+      kernelVariant = "debug";
+      initVariant = "debug";
+      suffix = "";
+    };
+    run-gdb-kernel-release = mkGdbRun {
+      kernelVariant = "release";
+      initVariant = "debug";
+      suffix = "-kernel-release";
+    };
+    run-gdb-init-release = mkGdbRun {
+      kernelVariant = "debug";
+      initVariant = "release";
+      suffix = "-init-release";
+    };
+    run-gdb-release = mkGdbRun {
+      kernelVariant = "release";
+      initVariant = "release";
+      suffix = "-release";
+    };
+  in {
+    packages =
+      {
         inherit run run-debug run-gdb run-gdb-kernel-release run-gdb-init-release run-gdb-release;
         init_debug = debugInit;
         init_release = releaseInit;
@@ -122,7 +121,8 @@
           cd "$(git rev-parse --show-toplevel)/kernel"
           exec bacon -- -Z json-target-spec "$@"
         '';
-      } // pkgs.lib.optionalAttrs isLinux {
+      }
+      // pkgs.lib.optionalAttrs isLinux {
         gdb = pkgs.writeShellScriptBin "gdb" ''
           ${self.lib.variantArgs {}}
 
@@ -145,5 +145,5 @@
           exec ${cross.buildPackages.gdb}/bin/aarch64-none-elf-gdb -nx -ix "$tmpgdbinit" "''${variant_args[@]}"
         '';
       };
-    };
+  };
 }

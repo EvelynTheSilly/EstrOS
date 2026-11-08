@@ -14,7 +14,12 @@
           buildType = "release";
           src = ./.;
           initName = "spawner.c";
-          cFiles = [ { file = "uart.c"; sym = "uart_process"; } ];
+          cFiles = [
+            {
+              file = "uart.c";
+              sym = "uart_process";
+            }
+          ];
         };
       };
       debug = {
@@ -24,7 +29,12 @@
           buildType = "debug";
           src = ./.;
           initName = "spawner.c";
-          cFiles = [ { file = "uart.c"; sym = "uart_process"; } ];
+          cFiles = [
+            {
+              file = "uart.c";
+              sym = "uart_process";
+            }
+          ];
         };
       };
     };

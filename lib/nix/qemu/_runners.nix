@@ -1,15 +1,13 @@
-{...}:
-{
-  flake.lib.qemu.buildScript =
-    {
-      pkgs,
-      name,
-      efiVars,
-      diskImage,
-      extraFlags ? "",
-    }:
+{...}: {
+  flake.lib.qemu.buildScript = {
+    pkgs,
+    name,
+    efiVars,
+    diskImage,
+    extraFlags ? "",
+  }:
     pkgs.runCommand name {
-      buildInputs = [ pkgs.qemu ];
+      buildInputs = [pkgs.qemu];
     } ''
       mkdir -p $out/bin
       cat > $out/bin/${name} <<EOF
@@ -49,4 +47,3 @@
       chmod +x $out/bin/${name}
     '';
 }
-
