@@ -12,7 +12,9 @@ mod tuple_lock;
 /// the Mutex for the duration of the provided closure.
 pub trait Mutex {
     /// The type of the data that is wrapped by this mutex.
-    type Data<'a> where Self: 'a;
+    type Data<'a>
+    where
+        Self: 'a;
 
     /// Locks the mutex and grants the closure temporary mutable access to the wrapped data.
     fn lock<'a, R>(&'a self, f: impl FnOnce(Self::Data<'a>) -> R) -> R;
@@ -24,7 +26,10 @@ pub type GlobalSharedLock<T> = spin_lock::SpinLock<T>;
 /// blanket implementation allowing references to mutexes to be locked,
 /// enabling patterns like `(&a, &b).lock(|(x, y)| ...)`
 impl<T: Mutex> Mutex for &T {
-    type Data<'a> = T::Data<'a> where Self: 'a;
+    type Data<'a>
+        = T::Data<'a>
+    where
+        Self: 'a;
 
     fn lock<'a, R>(&'a self, f: impl FnOnce(Self::Data<'a>) -> R) -> R {
         <T as Mutex>::lock(*self, f)

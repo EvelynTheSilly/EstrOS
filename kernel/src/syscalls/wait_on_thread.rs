@@ -8,7 +8,13 @@
 ///
 /// returns: 0 on success
 use crate::{
-    scheduler::{CpuScheduler, PROCESS_MANAGER, process::{Pid, threads::{Tid, wait_conditions::WaitState}}},
+    scheduler::{
+        CpuScheduler, PROCESS_MANAGER,
+        process::{
+            Pid,
+            threads::{Tid, wait_conditions::WaitState},
+        },
+    },
     syncronisation::Mutex,
     syscalls::{SyscallResult, syscall_err},
     vectors::cpu_state::State,

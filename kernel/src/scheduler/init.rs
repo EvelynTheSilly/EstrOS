@@ -7,8 +7,11 @@ use limine::request::ModulesRequest;
 
 #[used]
 #[unsafe(link_section = ".requests")]
-static INIT: ModulesRequest =
-    ModulesRequest::new_rev1(&[&InternalModule::new(c"/init.elf", c"", INTERNAL_MODULE_REQUIRED)]);
+static INIT: ModulesRequest = ModulesRequest::new_rev1(&[&InternalModule::new(
+    c"/init.elf",
+    c"",
+    INTERNAL_MODULE_REQUIRED,
+)]);
 
 pub fn get_init() -> Process {
     let res = INIT.response().unwrap();

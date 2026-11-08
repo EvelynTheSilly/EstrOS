@@ -45,7 +45,9 @@ fn map_uart_mmio(hhdm_base: u64) {
             let entry_ptr = (table_va + index as u64 * 8) as *mut u64;
             let entry = entry_ptr.read_volatile();
             if shift == 12 {
-                entry_ptr.write_volatile(UART_PHYS | 0b1 | (0b1 << 1) | (0b10 << 2) | (0b1 << 10) | (0b1 << 11));
+                entry_ptr.write_volatile(
+                    UART_PHYS | 0b1 | (0b1 << 1) | (0b10 << 2) | (0b1 << 10) | (0b1 << 11),
+                );
                 return;
             }
             let desc_type = entry & 0b11;

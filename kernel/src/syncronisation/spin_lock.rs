@@ -26,7 +26,10 @@ impl<T> SpinLock<T> {
 }
 
 impl<T> Mutex for SpinLock<T> {
-    type Data<'a> = &'a mut T where T: 'a;
+    type Data<'a>
+        = &'a mut T
+    where
+        T: 'a;
     fn lock<'a, R>(&'a self, f: impl FnOnce(Self::Data<'a>) -> R) -> R {
         loop {
             if unlikely(

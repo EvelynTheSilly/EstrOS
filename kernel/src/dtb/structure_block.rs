@@ -39,9 +39,7 @@ impl Node {
         let pad = "  ".repeat(indent);
         writeln!(f, "{}node: {}", pad, self.name)?;
         for prop in &self.properties {
-            let name = strings
-                .get_string(prop.name_off)
-                .unwrap_or("<unknown>");
+            let name = strings.get_string(prop.name_off).unwrap_or("<unknown>");
             let value_str = core::str::from_utf8(&prop.value)
                 .map(|s| format!("\"{}\"", s))
                 .unwrap_or_else(|_| {
