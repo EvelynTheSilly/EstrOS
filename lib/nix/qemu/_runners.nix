@@ -10,6 +10,9 @@
       buildInputs = [pkgs.qemu];
     } ''
       mkdir -p $out/bin
+      # Sidecar copy so runtime-only consumers (krun --init-file) can patch a
+      # writable clone of the disk without knowing the disk-image package path.
+      cp ${diskImage}/disk.img $out/disk.img
       cat > $out/bin/${name} <<EOF
       #!${pkgs.bash}/bin/bash
       set -e
@@ -17,7 +20,7 @@
       trap 'rm -rf "\$tmpdir"' EXIT
       cp --no-preserve=mode ${efiVars}/AAVMF_CODE.fd "\$tmpdir/AAVMF_CODE.fd"
       cp --no-preserve=mode ${efiVars}/AAVMF_VARS.fd "\$tmpdir/AAVMF_VARS.fd"
-      cp --no-preserve=mode ${diskImage}/disk.img "\$tmpdir/disk.img"
+      cp --no-preserve=mode \''${ESTROS_DISK_IMAGE:-${diskImage}/disk.img} "\$tmpdir/disk.img"
 
       GRAPHICS_FLAGS="-device ramfb"
       EXTRA_FLAGS="${extraFlags}"

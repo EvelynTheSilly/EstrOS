@@ -14,7 +14,7 @@
     cross = pkgs.pkgsCross.aarch64-embedded;
     isLinux = system != "aarch64-darwin";
     inits = self.estros.inits;
-    init = inits.binary;
+    init = inits.rust_init;
     releaseInit = self.lib.buildInit {init = init.release;};
     debugInit = self.lib.buildInit {init = init.debug;};
 
@@ -35,6 +35,15 @@
         inherit init kernel pkgs;
       };
 
+    # Disk with the kernel but no init.elf: krun --init-file splices the ELF
+    # in at runtime instead of baking it in at build time.
+    mkBareImage = kernel:
+      self.lib.qemu.buildDiskImage {
+        init = null;
+        inherit kernel pkgs;
+        withInit = false;
+      };
+
     # Halts under gdb's control: -S freezes the guest, -s opens :1234.
     mkGdbRun = {
       kernelVariant,
@@ -51,6 +60,9 @@
     release = mkImage releaseInit releaseKernel;
     debug = mkImage debugInit debugKernel;
 
+    bareRelease = mkBareImage releaseKernel;
+    bareDebug = mkBareImage debugKernel;
+
     run = self.lib.qemu.buildScript {
       inherit pkgs;
       name = "estros-run";
@@ -60,6 +72,18 @@
       inherit pkgs;
       name = "estros-run-debug";
       inherit (debug) efiVars diskImage;
+    };
+    # Backend for krun --init-file: the wrapper swaps in a custom init.elf by
+    # pointing ESTROS_DISK_IMAGE at a patched copy of the bare disk.
+    run-bare = self.lib.qemu.buildScript {
+      inherit pkgs;
+      name = "estros-run-bare";
+      inherit (bareRelease) efiVars diskImage;
+    };
+    run-bare-debug = self.lib.qemu.buildScript {
+      inherit pkgs;
+      name = "estros-run-bare-debug";
+      inherit (bareDebug) efiVars diskImage;
     };
     run-gdb = mkGdbRun {
       kernelVariant = "debug";
@@ -84,21 +108,60 @@
   in {
     packages =
       {
-        inherit run run-debug run-gdb run-gdb-kernel-release run-gdb-init-release run-gdb-release;
+        inherit run run-debug run-bare run-bare-debug run-gdb run-gdb-kernel-release run-gdb-init-release run-gdb-release;
         init_debug = debugInit;
         init_release = releaseInit;
         default = run;
 
         krun = pkgs.writeShellScriptBin "krun" ''
           run_pkg=run
+          init_file=""
           args=()
-          for arg in "$@"; do
-            if [[ "$arg" == "--debug" ]]; then
-              run_pkg=run-debug
-            else
-              args+=("$arg")
-            fi
+          while [[ $# -gt 0 ]]; do
+            case "$1" in
+              --debug)
+                run_pkg=run-debug
+                shift
+                ;;
+              --init-file)
+                if [[ $# -lt 2 ]]; then
+                  echo "krun: --init-file requires a path" >&2
+                  exit 1
+                fi
+                init_file="$2"
+                shift 2
+                ;;
+              --init-file=*)
+                init_file="''${1#--init-file=}"
+                shift
+                ;;
+              *)
+                args+=("$1")
+                shift
+                ;;
+            esac
           done
+
+  if [[ -n "$init_file" ]]; then
+    if [[ ! -f "$init_file" ]]; then
+      echo "krun: init file not found: $init_file" >&2
+      exit 1
+    fi
+    if [[ "$run_pkg" == run ]]; then
+      run_pkg=run-bare
+    else
+      run_pkg=run-bare-debug
+    fi
+    bare_bin=$(nix build ".#$run_pkg" --no-link --print-out-paths)
+    tmpdir=$(mktemp -d)
+    trap 'rm -rf "$tmpdir"' EXIT
+    cp "$bare_bin/disk.img" "$tmpdir/disk.img"
+    chmod +w "$tmpdir/disk.img"
+    ${pkgs.mtools}/bin/mcopy -i "$tmpdir/disk.img@@1048576" -- "$init_file" ::/init.elf
+    export ESTROS_DISK_IMAGE="$tmpdir/disk.img"
+    exec "$bare_bin/bin/estros-$run_pkg" "''${args[@]}"
+  fi
+
           exec nix run ".#$run_pkg" -- "''${args[@]}"
         '';
         kdebug = pkgs.writeShellScriptBin "kdebug" ''

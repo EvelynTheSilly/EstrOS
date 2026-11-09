@@ -17,6 +17,13 @@ krun            # release kernel + init
 krun --debug    # debug kernel + init
 ~~~
 
+you can also swap the init out for an arbitrary ELF at runtime without a rebuild (everything else — kernel, bootloader — still comes from the flake):
+~~~sh
+krun --init-file ./path/to/init.elf            # release kernel + custom init
+krun --debug --init-file ./path/to/init.elf    # debug kernel + custom init
+~~~
+(`--init-file=path` works too)
+
 debug with 
 ~~~sh
 kdebug          # debug kernel + debug init, halted, with gdb attached

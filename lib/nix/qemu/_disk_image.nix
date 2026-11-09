@@ -3,6 +3,7 @@
     init,
     kernel,
     pkgs,
+    withInit ? true,
     limine ? pkgs.limine-full,
     ovmf ? pkgs.pkgsCross.aarch64-multiplatform.OVMF.fd,
   }: let
@@ -60,7 +61,7 @@
 
       cp ${stage2}/part.fat $out/part.fat
       chmod +w $out/part.fat
-      ${pkgs.mtools}/bin/mcopy -i $out/part.fat ${init}/init.elf ::/init.elf
+      ${pkgs.lib.optionalString withInit "${pkgs.mtools}/bin/mcopy -i $out/part.fat ${init}/init.elf ::/init.elf"}
 
       cp ${stage2}/disk.img $out/disk.img
       chmod +w $out/disk.img
