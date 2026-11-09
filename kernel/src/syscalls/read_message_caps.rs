@@ -7,9 +7,9 @@ use alloc::vec::Vec;
 /// x3: len
 ///
 /// errors:
-/// 1: invalid cap
-/// 2: invalid mid
-/// 3: memory write fail
+/// -1: invalid cap
+/// -2: invalid mid
+/// -3: memory write fail
 ///
 /// contract:
 /// it will read LEN capabilities from MID to POINTER
@@ -38,15 +38,15 @@ pub fn read_message_caps(state: &mut State, pid: Pid, _tid: Tid) -> SyscallResul
         };
 
         let Some(capability) = process.capabilities.caps.get(&cap_id) else {
-            return syscall_err(1);
+            return syscall_err(-1);
         };
 
         let channel_id = {
             let RecieverCapability(cap) = capability else {
-                return syscall_err(1);
+                return syscall_err(-1);
             };
             if cap.proc != pid {
-                return syscall_err(1);
+                return syscall_err(-1);
             }
             cap.reciever_id
         };
@@ -56,10 +56,10 @@ pub fn read_message_caps(state: &mut State, pid: Pid, _tid: Tid) -> SyscallResul
             .message_channels
             .get_mut(&channel_id)
         else {
-            return syscall_err(1);
+            return syscall_err(-1);
         };
         let Ok(caps) = channel.read_message_caps(mid, len as usize) else {
-            return syscall_err(2);
+            return syscall_err(-2);
         };
         let ids: Vec<CapID> = caps
             .into_iter()
@@ -74,7 +74,7 @@ pub fn read_message_caps(state: &mut State, pid: Pid, _tid: Tid) -> SyscallResul
             .mem_write(process_pointer as usize, buff)
             .is_err()
         {
-            syscall_err(3)
+            syscall_err(-3)
         } else {
             Some(Ok(read))
         }
