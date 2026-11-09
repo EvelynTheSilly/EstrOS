@@ -1,0 +1,9 @@
+{
+  "lsp": {
+    "rust-analyzer": {
+      "binary": {
+        "path": "./.zed/rust-analyzer.sh"
+      }
+    }
+  }
+}

@@ -48,6 +48,7 @@
         then "${pkgs.pkgsCross.aarch64-multiplatform.OVMF.fd}/FV"
         else "";
       CARGO_UNSTABLE_JSON_TARGET_SPEC = "true";
+      ESTROS_RA = "${inputs'.estros-rustc.packages.default}/bin/rust-analyzer";
       shellHook = ''
         if [[ $- == *i* ]]; then
             nu -e "alias cloc = cloc --vcs git; alias bacon = bacon -- -Z json-target-spec; alias cargo = cargo -Z json-target-spec "
