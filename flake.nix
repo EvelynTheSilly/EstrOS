@@ -5,7 +5,8 @@
     import-tree.url = "github:denful/import-tree";
     rust-overlay.url = "github:oxalica/rust-overlay";
     crane.url = "github:ipetkov/crane";
-    estros-rustc.url = "git+file:../rustc-estros";
+    #estros-rustc.url = "git+file:../rustc-estros";
+    estros-rustc.url = "github:EvelynTheSilly/rustc-estros";
   };
 
   outputs = inputs:

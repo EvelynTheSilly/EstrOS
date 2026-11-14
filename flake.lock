@@ -21,17 +21,17 @@
         "rust-overlay": "rust-overlay"
       },
       "locked": {
-        "lastModified": 1794250946,
-        "narHash": "sha256-uoXBawGneKosPp5mZ47Zry6pJgN0P2RsWff9+YAIk2I=",
-        "ref": "refs/heads/main",
-        "rev": "a41fb2a5416812c6a1f15ebec0b5156c707b62a2",
-        "revCount": 346135,
-        "type": "git",
-        "url": "file:../rustc-estros"
+        "lastModified": 1794340683,
+        "narHash": "sha256-VI0Ggc9ICJW5RLjBmHGCY9jLwxvVjj9RO9S7asG6+CE=",
+        "owner": "EvelynTheSilly",
+        "repo": "rustc-estros",
+        "rev": "bc0ab40138772b43fb8ee368f901303415b0f017",
+        "type": "github"
       },
       "original": {
-        "type": "git",
-        "url": "file:../rustc-estros"
+        "owner": "EvelynTheSilly",
+        "repo": "rustc-estros",
+        "type": "github"
       }
     },
     "flake-parts": {
