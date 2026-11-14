@@ -1,0 +1,9 @@
+[workspace]
+members = [
+  "entry",
+  "uart",
+  "uart_user",
+  "vfs",
+  "vfs_proto",
+]
+resolver = "3"
