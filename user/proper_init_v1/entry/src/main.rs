@@ -28,7 +28,6 @@ fn main() {
     println!("recieved message");
     let vfs_cap = message.read_caps().remove(0);
 
-    println!("entry: spawning uart driver");
     // uart driver receives, in order (from_id 0,1,2):
     // 0 = vfs cap, 1 = ack cap, 2 = uart device cap
     let ack_cap = cap::Capability::spawn_message();
@@ -46,9 +45,7 @@ fn main() {
         );
     };
     ack_cap.wait_message().unwrap();
-    println!("entry: uart driver registered /dev/uart");
 
-    println!("entry: spawning uart_user");
     let user_caps = [vfs_cap.duplicate()];
     unsafe {
         syscalls::spawn_process(

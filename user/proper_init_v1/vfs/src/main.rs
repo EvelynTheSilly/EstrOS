@@ -50,21 +50,17 @@ impl VFSPersistant {
             return Err(Box::new(MessageProcessingError::HeaderError));
         }
         let header: VFSPacketHeader = unsafe { std::ptr::read(data.as_ptr() as *const _) };
-        println!("header data: {:?}", header);
         let data = {
             let mut vec = Vec::new();
             let mut data = [0u8; 64];
             while let Some(read) = msg.read_bytes(&mut data) {
-                println!("vfs: read chunk {}", read);
                 vec.extend_from_slice(&data[..read]);
                 if read == 0 {
-                    println!("vfs: zero read, breaking");
                     break;
                 }
             }
             vec
         };
-        println!("vfs: processed body, {} bytes, {} caps", data.len(), caps.len());
         match header.packet_type {
             // create:
             // data will be used for a utf8 string path restricted to
@@ -78,12 +74,8 @@ impl VFSPersistant {
                 self.fs.insert(data, caps.remove(1));
             }
             2 => 'handler: {
-                println!("vfs: lookup for {:?}", data);
                 if let Some(cap) = self.fs.get(&data) {
                     responce.send_message(&[], vec![cap.duplicate()]);
-                    println!("vfs: lookup answered");
-                } else {
-                    println!("vfs: lookup MISS");
                 };
             }
             _ => {}
@@ -92,12 +84,10 @@ impl VFSPersistant {
     }
     pub fn serve(&mut self) -> ! {
         loop {
-            println!("waiting for message");
             let msg = self
                 .root_reciever_cap
                 .wait_message()
                 .expect("failed to wait on capability");
-            println!("got message");
             let res = self.process_message(msg);
             if let Err(err) = res {
                 println!("ERROR: {}", err)
@@ -108,7 +98,6 @@ impl VFSPersistant {
 
 fn main() {
     assert!(size_of::<VFSPacketHeader>() == 16);
-    println!("starting vfs driver");
     let responce = unsafe { Capability::from_id(0) };
     let cap = Capability::spawn_message();
     responce.send_message(&[], vec![cap.duplicate()]);

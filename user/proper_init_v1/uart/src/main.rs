@@ -47,7 +47,6 @@ fn main() {
         let msg = serving_cap
             .wait_message()
             .expect("uart driver: failed to wait on serving cap");
-        println!("uart driver: got write request");
         let mut buf = [0u8; RX_BUF_LEN];
         while let Some(read) = msg.read_bytes(&mut buf) {
             if read == 0 {
@@ -60,6 +59,5 @@ fn main() {
                 break;
             }
         }
-        println!("uart driver: wrote {}+ bytes to uart", RX_BUF_LEN);
     }
 }
