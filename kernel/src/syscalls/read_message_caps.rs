@@ -68,7 +68,7 @@ pub fn read_message_caps(state: &mut State, pid: Pid, _tid: Tid) -> SyscallResul
 
         let buff = ids.iter().flat_map(|id| id.to_ne_bytes()).collect();
 
-        let read = (ids.len() * 8) as u64;
+        let read = ids.len() as u64;
         if process
             .mem_manager
             .mem_write(process_pointer as usize, buff)

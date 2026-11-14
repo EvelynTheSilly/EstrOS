@@ -93,7 +93,6 @@ impl Message {
         let first = Vec::from(&self.caps.as_slice()[0..to_read]);
         let last = Vec::from(&self.caps.as_slice()[to_read..]);
         self.caps = last;
-        self.read_pointer += to_read;
 
         first
     }
