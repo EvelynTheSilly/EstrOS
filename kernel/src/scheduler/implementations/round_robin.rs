@@ -78,20 +78,21 @@ impl RoundRobinScheduler {
 impl CpuScheduler for RoundRobinScheduler {
     fn schedule(&mut self) -> Result<SchedulingResult> {
         let start_robin = self.current_robin;
-        loop {
-            let robin = self
-                .get_next_robin()
-                .ok_or(CpuSchedulerError::NoProcesses)?;
+        let proc_count = self.processes.len();
+        if proc_count == 0 {
+            return Err(CpuSchedulerError::NoProcesses);
+        }
+        for i in 1..=proc_count {
+            let robin = (start_robin + i) % proc_count;
             let meta = self
                 .processes
                 .iter_mut()
                 .nth(robin)
                 .expect("robin should be in bounds of processes");
             let start_thread_robin = meta.tid_robin;
-            loop {
-                let Some(thread_robin) = meta.get_next_robin() else {
-                    break;
-                };
+            let thread_count = meta.process.threads.len();
+            for j in 1..=thread_count {
+                let thread_robin = (start_thread_robin + j) % thread_count;
                 let thread = meta
                     .process
                     .threads
@@ -102,21 +103,18 @@ impl CpuScheduler for RoundRobinScheduler {
                 let runnable = thread.wait_state.is_none();
 
                 if runnable {
+                    meta.tid_robin = thread_robin;
+                    self.current_robin = robin;
                     return Ok(SchedulingResult::Thread {
                         pid: meta.pid,
                         tid: thread_robin as Tid,
                         thread: thread.clone(),
                     });
                 }
-                if thread_robin == start_thread_robin {
-                    break;
-                }
-            }
-            if robin == start_robin {
-                // we have seen it all, and havent returned earlier with a process
-                return Ok(SchedulingResult::Wait);
             }
         }
+        // we have seen it all, and havent returned earlier with a process
+        Ok(SchedulingResult::Wait)
     }
     fn launch_process(&mut self, process: Process) -> Pid {
         let pid = self.next_pid();
