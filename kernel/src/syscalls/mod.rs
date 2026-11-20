@@ -1,8 +1,9 @@
 use crate::{
     scheduler::process::{Pid, threads::Tid},
     syscalls::{
-        cap_duplicate::cap_duplicate, exit::exit, kill_thread::kill_thread,
-        lookup_mem_cap::lookup_mem_cap, map_device_memory::map_device_memory, map_page::map_page,
+        cap_duplicate::cap_duplicate, cap_has_content::cap_has_content, exit::exit,
+        kill_thread::kill_thread, lookup_mem_cap::lookup_mem_cap,
+        map_device_memory::map_device_memory, map_page::map_page,
         read_message_caps::read_message_caps, read_message_data::read_message_data,
         send_message_to_receiver::send_message_to_receiver, spawn_capability::spawn_capability,
         spawn_process::spawn_process, spawn_thread::spawn_thread,
@@ -12,7 +13,9 @@ use crate::{
     vectors::cpu_state::State,
 };
 use thiserror::Error;
+
 mod cap_duplicate;
+mod cap_has_content;
 mod exit;
 mod kill_thread;
 mod lookup_mem_cap;
@@ -47,6 +50,7 @@ const SYSCALLS: &[fn(&mut State, Pid, Tid) -> SyscallResult] = &[
     lookup_mem_cap,
     read_message_caps,
     map_page,
+    cap_has_content,
 ];
 
 pub fn handle_syscall(state: &mut State, iss: u64, pid: Pid, tid: Tid) {
