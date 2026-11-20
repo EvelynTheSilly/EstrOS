@@ -1,13 +1,16 @@
+use crate::packet_handlers::{
+    create::create_handler, error_to_code_plus_error, open::open_handler,
+};
 use std::{
     collections::HashMap,
     error::Error,
-    os::estros::{
-        cap::{Capability, message::Message},
-        syscalls,
-    },
+    os::estros::cap::{Capability, message::Message},
 };
 use thiserror::Error;
-use vfs_proto::VFSPacketHeader;
+use vfs_proto::{
+    VFSPacketHeader,
+    packets::{CREATE, OPEN},
+};
 
 mod packet_handlers;
 
@@ -39,7 +42,7 @@ impl VFSPersistant {
             return Err(Box::new(MessageProcessingError::ResponceCapError));
         }
         let responce = caps
-            .get(0)
+            .try_remove(0)
             .ok_or(Box::new(MessageProcessingError::ResponceCapError))?;
         let mut data = [0u8; 16];
         let bytes_read = msg
@@ -61,25 +64,24 @@ impl VFSPersistant {
             }
             vec
         };
-        match header.packet_type {
-            // create:
-            // data will be used for a utf8 string path restricted to
-            1 => 'handler: {
-                if data.contains(&0u8) {
-                    break 'handler;
-                };
-                if data.contains(&10u8) {
-                    break 'handler;
-                };
-                self.fs.insert(data, caps.remove(1));
+        let result: Result<(Vec<u8>, Vec<Capability>), (u8, Box<dyn Error>)> =
+            match header.packet_type {
+                CREATE => error_to_code_plus_error(create_handler(self, data, caps)),
+                OPEN => error_to_code_plus_error(open_handler(self, data, caps)),
+                _ => todo!(),
+            };
+        match result {
+            Ok((data, caps)) => {
+                let mut ret_data = vec![0];
+                ret_data.extend_from_slice(data.as_slice());
+                responce.send_message(&ret_data.as_slice(), caps);
             }
-            2 => 'handler: {
-                if let Some(cap) = self.fs.get(&data) {
-                    responce.send_message(&[], vec![cap.duplicate()]);
-                };
+            Err((code, error)) => {
+                let mut ret_data = vec![code];
+                ret_data.extend_from_slice(&(*error.to_string().as_bytes()));
+                responce.send_message(&ret_data.as_slice(), Vec::new());
             }
-            _ => {}
-        };
+        }
         Ok(())
     }
     pub fn serve(&mut self) -> ! {

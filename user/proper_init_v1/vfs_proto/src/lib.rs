@@ -12,6 +12,11 @@ pub struct VFSPacketHeader {
 pub const LATEST_SUPPORTED_VERSION: u8 = 0;
 pub const MAGIC: u64 = u64::from_le_bytes(*b"ESTRVFS\0");
 
+pub mod packets {
+    pub const CREATE: u8 = 1u8;
+    pub const OPEN: u8 = 2u8;
+}
+
 impl VFSPacketHeader {
     pub fn new(packet_type: u8, packet_version: u8) -> Self {
         VFSPacketHeader {
