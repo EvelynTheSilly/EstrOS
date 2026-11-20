@@ -26,6 +26,8 @@ enum MessageProcessingError {
     ResponceCapError,
     #[error("invalid header")]
     HeaderError,
+    #[error("invalid packet type")]
+    PacketTypeError,
 }
 
 impl VFSPersistant {
@@ -68,7 +70,7 @@ impl VFSPersistant {
             match header.packet_type {
                 CREATE => error_to_code_plus_error(create_handler(self, data, caps)),
                 OPEN => error_to_code_plus_error(open_handler(self, data, caps)),
-                _ => todo!(),
+                _ => Err((u8::MAX, Box::new(MessageProcessingError::PacketTypeError))),
             };
         match result {
             Ok((data, caps)) => {
